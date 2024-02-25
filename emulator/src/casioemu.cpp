@@ -180,6 +180,7 @@ int main(int argc, char *argv[]) {
             case SDL_KEYUP:
             case SDL_TEXTINPUT:
             case SDL_MOUSEMOTION:
+            case SDL_MOUSEWHEEL:
                 if (SDL_GetKeyboardFocus() != emulator.window || SDL_GetMouseFocus() != emulator.window) {
                     ImGui_ImplSDL2_ProcessEvent(&event);
                     break;
