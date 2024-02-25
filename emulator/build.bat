@@ -15,6 +15,6 @@
 
 @set output_exe=casioemu.exe
 
-g++ %compiler% %files% %linker% -o %output_exe%
+g++ %compiler% %files% %linker% -O2 -o %output_exe%
 
 @popd
