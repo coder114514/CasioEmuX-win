@@ -73,7 +73,8 @@ int main(int argc, char *argv[]) {
         if (err && err != ENOENT)
             PANIC("error while reading history file: %s\n", std::strerror(err));
     }
-
+    
+    static std::atomic<bool> got_inp(false);
     {
         Emulator emulator(argv_map);
         m_emu = &emulator;
@@ -82,19 +83,22 @@ int main(int argc, char *argv[]) {
 
         // Used to signal to the console input thread when to stop.
         static std::atomic<bool> running(true);
+        static std::atomic<int> inp_cnt(0);
+        static char pr[500];
 
         test_gui();
         std::thread console_input_thread([&] {
             while (1) {
                 char *console_input_c_str;
-                bool got = false;
+                got_inp = false;
                 std::thread readline_thread([&] {
-                    console_input_c_str = readline("> ");
-                    got = true;
+                    sprintf(pr, "In [%d]: ", ++inp_cnt);
+                    console_input_c_str = readline(pr);
+                    got_inp = true;
                 });
                 readline_thread.detach();
 
-                while (!got)
+                while (!got_inp)
                     if (!running)
                         return;
 
@@ -194,7 +198,9 @@ int main(int argc, char *argv[]) {
         console_input_thread.join();
     }
 
-    std::cout << "\nGoodbye" << std::endl;
+    if (!got_inp)
+        std::cout << std::endl;
+    std::cout << "Goodbye" << std::endl;
 
     IMG_Quit();
     SDL_Quit();
