@@ -74,128 +74,127 @@ int main(int argc, char *argv[]) {
             PANIC("error while reading history file: %s\n", std::strerror(err));
     }
 
-    Emulator emulator(argv_map);
-    m_emu = &emulator;
+    {
+        Emulator emulator(argv_map);
+        m_emu = &emulator;
 
-    // Note: argv_map must be destructed after emulator.
+        // Note: argv_map must be destructed after emulator.
 
-    // Used to signal to the console input thread when to stop.
-    static std::atomic<bool> running(true);
-    std::atomic<bool> got_input(false);
+        // Used to signal to the console input thread when to stop.
+        static std::atomic<bool> running(true);
 
-    test_gui();
-    std::thread console_input_thread([&] {
-        while (1) {
-            char *console_input_c_str;
-            std::thread readline_thread([&] {
-                got_input = false;
-                console_input_c_str = readline("> ");
-                got_input = true;
-            });
-            readline_thread.detach();
+        test_gui();
+        std::thread console_input_thread([&] {
+            while (1) {
+                char *console_input_c_str;
+                bool got = false;
+                std::thread readline_thread([&] {
+                    console_input_c_str = readline("> ");
+                    got = true;
+                });
+                readline_thread.detach();
 
-            while (!got_input)
-                if (!running)
+                while (!got)
+                    if (!running)
+                        return;
+
+                if (console_input_c_str == NULL) {
+                    if (argv_map.find("exit_on_console_shutdown") != argv_map.end()) {
+                        SDL_Event event;
+                        SDL_zero(event);
+                        event.type = SDL_WINDOWEVENT;
+                        event.window.event = SDL_WINDOWEVENT_CLOSE;
+                        SDL_PushEvent(&event);
+                    } else {
+                        logger::Info("Console thread shutting down\n");
+                    }
                     return;
+                }
 
-            if (console_input_c_str == NULL) {
-                if (argv_map.find("exit_on_console_shutdown") != argv_map.end()) {
+                // Ignore empty lines.
+                if (console_input_c_str[0] == 0)
+                    continue;
+
+                add_history(console_input_c_str);
+
+                std::lock_guard<decltype(emulator.access_mx)> access_lock(emulator.access_mx);
+                if (!emulator.Running())
+                    return;
+                emulator.ExecuteCommand(console_input_c_str);
+                free(console_input_c_str);
+
+                if (!emulator.Running()) {
                     SDL_Event event;
                     SDL_zero(event);
-                    event.type = SDL_WINDOWEVENT;
-                    event.window.event = SDL_WINDOWEVENT_CLOSE;
+                    event.type = SDL_USEREVENT;
+                    event.user.code = CE_EMU_STOPPED;
                     SDL_PushEvent(&event);
-                } else {
-                    logger::Info("Console thread shutting down\n");
+                    return;
                 }
-                return;
             }
+        });
+        std::thread t1([&]() {
+            while (1) {
+                gui_loop();
+            }
+        });
+        t1.detach();
 
-            // Ignore empty lines.
-            if (console_input_c_str[0] == 0)
+        while (emulator.Running()) {
+            SDL_Event event;
+            if (!SDL_PollEvent(&event))
                 continue;
 
-            add_history(console_input_c_str);
-
-            std::lock_guard<decltype(emulator.access_mx)> access_lock(emulator.access_mx);
-            if (!emulator.Running())
-                return;
-            emulator.ExecuteCommand(console_input_c_str);
-            free(console_input_c_str);
-
-            if (!emulator.Running()) {
-                SDL_Event event;
-                SDL_zero(event);
-                event.type = SDL_USEREVENT;
-                event.user.code = CE_EMU_STOPPED;
-                SDL_PushEvent(&event);
-                return;
-            }
-        }
-    });
-    std::thread t1([&]() {
-        while (1) {
-            gui_loop();
-        }
-    });
-    t1.detach();
-
-    while (emulator.Running()) {
-        SDL_Event event;
-        if (!SDL_PollEvent(&event))
-            continue;
-
-        switch (event.type) {
-        case SDL_USEREVENT:
-            switch (event.user.code) {
-            case CE_FRAME_REQUEST:
-                emulator.Frame();
-                break;
-            case CE_EMU_STOPPED:
-                if (emulator.Running())
-                    PANIC("CE_EMU_STOPPED event received while emulator is still running\n");
-                break;
-            }
-            break;
-
-        case SDL_WINDOWEVENT:
-            switch (event.window.event) {
-            case SDL_WINDOWEVENT_CLOSE:
-                emulator.Shutdown();
-                break;
-            case SDL_WINDOWEVENT_RESIZED:
-                if (event.window.windowID == SDL_GetWindowID(emulator.window)) {
-                    emulator.WindowResize(event.window.data1, event.window.data2);
+            switch (event.type) {
+            case SDL_USEREVENT:
+                switch (event.user.code) {
+                case CE_FRAME_REQUEST:
+                    emulator.Frame();
+                    break;
+                case CE_EMU_STOPPED:
+                    if (emulator.Running())
+                        PANIC("CE_EMU_STOPPED event received while emulator is still running\n");
+                    break;
                 }
                 break;
-            case SDL_WINDOWEVENT_EXPOSED:
-                emulator.Repaint();
-                break;
-            }
-            break;
 
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
-        case SDL_KEYDOWN:
-        case SDL_KEYUP:
-        case SDL_TEXTINPUT:
-        case SDL_MOUSEMOTION:
-        case SDL_MOUSEWHEEL:
-            if (SDL_GetKeyboardFocus() != emulator.window || SDL_GetMouseFocus() != emulator.window) {
-                ImGui_ImplSDL2_ProcessEvent(&event);
+            case SDL_WINDOWEVENT:
+                switch (event.window.event) {
+                case SDL_WINDOWEVENT_CLOSE:
+                    emulator.Shutdown();
+                    break;
+                case SDL_WINDOWEVENT_RESIZED:
+                    if (event.window.windowID == SDL_GetWindowID(emulator.window)) {
+                        emulator.WindowResize(event.window.data1, event.window.data2);
+                    }
+                    break;
+                case SDL_WINDOWEVENT_EXPOSED:
+                    emulator.Repaint();
+                    break;
+                }
+                break;
+
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP:
+            case SDL_KEYDOWN:
+            case SDL_KEYUP:
+            case SDL_TEXTINPUT:
+            case SDL_MOUSEMOTION:
+            case SDL_MOUSEWHEEL:
+                if (SDL_GetKeyboardFocus() != emulator.window || SDL_GetMouseFocus() != emulator.window) {
+                    ImGui_ImplSDL2_ProcessEvent(&event);
+                    break;
+                }
+                emulator.UIEvent(event);
                 break;
             }
-            emulator.UIEvent(event);
-            break;
         }
+
+        running = false;
+        console_input_thread.join();
     }
 
-    running = false;
-    console_input_thread.join();
-
-    if (!got_input)
-        std::cout << std::endl;
-    std::cout << "Goodbye" << std::endl;
+    std::cout << "\nGoodbye" << std::endl;
 
     IMG_Quit();
     SDL_Quit();
