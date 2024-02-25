@@ -3,8 +3,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include <editline/readline.h>
-
 namespace casioemu {
     namespace logger {
         void Info(const char *format, ...) {

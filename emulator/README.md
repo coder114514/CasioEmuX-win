@@ -20,3 +20,7 @@ these arguments are optional:
 `exit_on_console_shutdown=true/false` pretty self-evident, default to false
 
 `history=<history file path>` the file that stores your input history
+
+`width=<xxx>`, `height=<xxx>` the width of height of the emulator window
+
+`paused` if supplied, the emulator will pause on startup
