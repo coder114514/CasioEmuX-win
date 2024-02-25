@@ -3,22 +3,19 @@
 
 #include <string>
 
-namespace casioemu
-{
-	class Emulator;
-	class SpriteInfo;
-	class ColourInfo;
+namespace casioemu {
+    class Emulator;
+    class SpriteInfo;
+    class ColourInfo;
 
-	struct ModelInfo
-	{
-		ModelInfo(Emulator &emulator, std::string key);
-		Emulator &emulator;
-		std::string key;
+    struct ModelInfo {
+        ModelInfo(Emulator &emulator, std::string key);
+        Emulator &emulator;
+        std::string key;
 
-		operator std::string();
-		operator int();
-		operator SpriteInfo();
-		operator ColourInfo();
-	};
-}
-
+        operator std::string();
+        operator int();
+        operator SpriteInfo();
+        operator ColourInfo();
+    };
+} // namespace casioemu

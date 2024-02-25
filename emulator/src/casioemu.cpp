@@ -74,8 +74,6 @@ int main(int argc, char *argv[]) {
             PANIC("error while reading history file: %s\n", std::strerror(err));
     }
 
-    // while(1)
-    // 	;
     {
         Emulator emulator(argv_map);
         m_emu = &emulator;
@@ -89,18 +87,16 @@ int main(int argc, char *argv[]) {
         std::thread console_input_thread([&] {
             while (1) {
                 char *console_input_c_str;
-				bool got = false;
-				std::thread readline_thread([&]{
-					console_input_c_str = readline("> ");
-					got = true;
-				});
-				readline_thread.detach();
+                bool got = false;
+                std::thread readline_thread([&] {
+                    console_input_c_str = readline("> ");
+                    got = true;
+                });
+                readline_thread.detach();
 
-				while (!got) {
-					if (!running) {
-						return;
-					}
-				}
+                while (!got)
+                    if (!running)
+                        return;
 
                 if (console_input_c_str == NULL) {
                     if (argv_map.find("exit_on_console_shutdown") != argv_map.end()) {
@@ -112,8 +108,7 @@ int main(int argc, char *argv[]) {
                     } else {
                         logger::Info("Console thread shutting down\n");
                     }
-
-                    break;
+                    return;
                 }
 
                 // Ignore empty lines.
@@ -124,7 +119,7 @@ int main(int argc, char *argv[]) {
 
                 std::lock_guard<decltype(emulator.access_mx)> access_lock(emulator.access_mx);
                 if (!emulator.Running())
-                    break;
+                    return;
                 emulator.ExecuteCommand(console_input_c_str);
                 free(console_input_c_str);
 
@@ -146,8 +141,6 @@ int main(int argc, char *argv[]) {
         t1.detach();
 
         while (emulator.Running()) {
-
-            // std::cout<<SDL_GetMouseFocus()<<","<<emulator.window<<std::endl;
             SDL_Event event;
             if (!SDL_PollEvent(&event))
                 continue;
@@ -166,18 +159,11 @@ int main(int argc, char *argv[]) {
                 break;
 
             case SDL_WINDOWEVENT:
-
                 switch (event.window.event) {
                 case SDL_WINDOWEVENT_CLOSE:
                     emulator.Shutdown();
                     break;
                 case SDL_WINDOWEVENT_RESIZED:
-                    // if (!argv_map.count("resizable"))
-                    // {
-                    // 	// Normally, in this case, the window manager should not
-                    // 	// send resized event, but some still does (such as xmonad)
-                    // 	break;
-                    // }
                     if (event.window.windowID == SDL_GetWindowID(emulator.window)) {
                         emulator.WindowResize(event.window.data1, event.window.data2);
                     }

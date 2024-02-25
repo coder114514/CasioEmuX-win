@@ -3,11 +3,8 @@
 
 #include <SDL.h>
 
-namespace casioemu
-{
-	struct SpriteInfo
-	{
-		SDL_Rect src, dest;
-	};
-}
-
+namespace casioemu {
+    struct SpriteInfo {
+        SDL_Rect src, dest;
+    };
+} // namespace casioemu
