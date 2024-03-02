@@ -79,8 +79,8 @@ CodeElem CodeViewer::LookUp(uint8_t seg, uint16_t offset, int *idx) {
 }
 
 /**
- * called after an instruction is done (in CPU.cpp) or
- * a POP PC is executed (in CPUPushPop.cpp)
+ * called before the instruction is executed (for breakpoints/step, in CPU.cpp) or
+ * right after a POP PC is executed (for RET TRACE, in CPUPushPop.cpp)
  */
 bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool bp_mode) {
     for (auto it = break_points.begin(); it != break_points.end(); it++) {
@@ -136,7 +136,7 @@ void CodeViewer::DrawContent() {
                 ImGui::Text("%s", e.srcbuf);
                 if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
                     cur_row = line_i;
-                    need_roll = true;
+                    selected_addr = codes[cur_row].segment * 0x10000 + codes[cur_row].offset;
                 }
             } else { // selected
                 ImGui::InputText("##data", e.srcbuf, strlen(e.srcbuf), ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_AlwaysOverwrite);
@@ -152,9 +152,6 @@ void CodeViewer::DrawContent() {
                             cur_row = 0;
                         need_roll = true;
                     }
-                    if (!ImGui::IsItemActive()) {
-                        selected_addr = -1;
-                    }
                 }
             }
         }
@@ -162,8 +159,8 @@ void CodeViewer::DrawContent() {
     if (need_roll) {
         float v = (float)cur_row / max_row * ImGui::GetScrollMaxY();
         ImGui::SetScrollY(v);
-        need_roll = false;
         selected_addr = codes[cur_row].segment * 0x10000 + codes[cur_row].offset;
+        need_roll = false;
     }
 }
 
@@ -228,9 +225,7 @@ void CodeViewer::DrawWindow() {
         }
     }
 
-    ImGui::BeginChild("##scrolling");
     DrawMonitor();
-    ImGui::EndChild();
     ImGui::End();
     debug_flags = DEBUG_BREAKPOINT | (step_debug ? DEBUG_STEP : 0) | (trace_debug ? DEBUG_RET_TRACE : 0);
 }

@@ -386,6 +386,13 @@ namespace casioemu {
              */
             impl_flags_out = PSW_Z;
             (this->*(handler->handler_function))();
+            reg_psw &= ~impl_flags_changed;
+            reg_psw |= impl_flags_out & impl_flags_changed;
+
+            if (handler->hint & H_WB && impl_operands[0].register_size)
+                for (size_t bx = 0; bx != impl_operands[0].register_size; ++bx)
+                    reg_r[impl_operands[0].register_index + bx] = (uint8_t)(impl_operands[0].value >> (bx * 8));
+
             if (code_viewer) {
                 if ((code_viewer->debug_flags & DEBUG_BREAKPOINT) && code_viewer->TryTrigBP(reg_csr, reg_pc)) {
                     emulator.SetPaused(true);
@@ -393,12 +400,6 @@ namespace casioemu {
                     emulator.SetPaused(true);
                 }
             }
-            reg_psw &= ~impl_flags_changed;
-            reg_psw |= impl_flags_out & impl_flags_changed;
-
-            if (handler->hint & H_WB && impl_operands[0].register_size)
-                for (size_t bx = 0; bx != impl_operands[0].register_size; ++bx)
-                    reg_r[impl_operands[0].register_index + bx] = (uint8_t)(impl_operands[0].value >> (bx * 8));
 
             if (!(handler->hint & H_DS))
                 break;
@@ -441,14 +442,11 @@ namespace casioemu {
         output << std::hex << std::setfill('0') << std::uppercase;
         for (StackFrame frame : stack) {
             output << "  function "
-                   << frame.new_csr << ":" << frame.new_pc
-                   << " returns to " << std::setw(6);
+                   << frame.new_csr << ":" << frame.new_pc << " returns to ";
             if (frame.lr_pushed) {
                 uint16_t saved_lr, saved_lcsr = 0;
                 MMU &mmu = emulator.chipset.mmu;
-                saved_lr = ((uint16_t)mmu.ReadData(frame.lr_push_address + 1))
-                               << 8 |
-                           mmu.ReadData(frame.lr_push_address);
+                saved_lr = ((uint16_t)mmu.ReadData(frame.lr_push_address + 1)) << 8 | mmu.ReadData(frame.lr_push_address);
                 if (memory_model == MM_LARGE)
                     saved_lcsr = mmu.ReadData(frame.lr_push_address + 2);
                 output << saved_lcsr << ":" << saved_lr;
