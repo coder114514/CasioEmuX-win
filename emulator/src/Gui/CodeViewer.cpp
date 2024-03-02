@@ -120,27 +120,24 @@ void CodeViewer::DrawContent() {
                     if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
                         break_points.erase(line_i);
                     }
-                } else {
-                    ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "[ > ]");
+                } else { // it->second == 2
                     // the break point is triggered!
-                    ImGui::SameLine();
-                    if (ImGui::Button("Continue?")) {
-                        break_points.erase(line_i);
-                        m_emu->SetPaused(false);
-                    }
+                    bp_triggered = true;
+                    bp = line_i;
+                    ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "[ > ]");
                 }
             }
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(1.0, 1.0, 0.0, 1.0), "%d:%04x", e.segment, e.offset);
             ImGui::SameLine();
-            if (selected_addr != (uint32_t)e.segment * 0x10000 + e.offset) {
+            if (selected_addr != (uint32_t)e.segment * 0x10000 + e.offset) { // not selected
                 ImGui::Text("%s", e.srcbuf);
                 if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
                     selected_addr = e.segment * 0x10000 + e.offset;
                     cur_col = line_i;
                     edit_active = true;
                 }
-            } else {
+            } else { // selected
                 if (edit_active) {
                     ImGui::InputText("##data", e.srcbuf, strlen(e.srcbuf), ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_AlwaysOverwrite);
                     // ImGui::SetKeyboardFocusHere();
@@ -212,13 +209,27 @@ void CodeViewer::DrawWindow() {
     ImGui::SetNextItemWidth(ImGui::CalcTextSize("000000").x);
     ImGui::InputText("##input", adrbuf, 8);
     if (adrbuf[0] != '\0' && ImGui::IsItemFocused()) {
-        uint32_t addr = std::stoi(adrbuf, 0, 16);
-        JumpTo(addr >> 16, addr & 0x0ffff);
+        try {
+            uint32_t addr = std::stoi(adrbuf, 0, 16);
+            JumpTo(addr >> 16, addr & 0x0ffff);
+        } catch (std::invalid_argument const &ex) {
+            // do nothing
+        } catch (std::out_of_range const &ex) {
+            // do nothing
+        }
     }
     ImGui::SameLine();
     ImGui::Checkbox("STEP", &step_debug);
     ImGui::SameLine();
     ImGui::Checkbox("TRACE", &trace_debug);
+    if (bp_triggered) {
+        ImGui::SameLine();
+        if (ImGui::Button("Continue?")) {
+            break_points.erase(bp);
+            m_emu->SetPaused(false);
+            bp_triggered = false, bp = -1;
+        }
+    }
 
     // ImGui::BeginChild("##scrolling");
     DrawMonitor();

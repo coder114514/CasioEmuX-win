@@ -35,6 +35,8 @@ private:
     bool edit_active = false;
     bool need_roll = false;
     uint32_t selected_addr = -1;
+    bool bp_triggered = false;
+    uint32_t bp = -1;
 
 public:
     uint8_t debug_flags = DEBUG_BREAKPOINT;
