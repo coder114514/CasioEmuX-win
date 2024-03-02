@@ -6,11 +6,13 @@
 #include <string>
 #include <vector>
 
-typedef struct {
+struct CodeElem {
     uint8_t segment;
     uint16_t offset;
     char srcbuf[40];
-} CodeElem;
+    CodeElem() {}
+    CodeElem(uint8_t seg, uint16_t off) : segment(seg), offset(off) {}
+};
 
 enum EmuDebugFlag {
     DEBUG_BREAKPOINT = 1,
@@ -39,7 +41,7 @@ public:
     CodeViewer(std::string path);
     ~CodeViewer();
     bool TryTrigBP(uint8_t seg, uint16_t offset, bool bp_mode = true);
-    CodeElem LookUp(uint8_t seg, uint16_t offset, int *idx = 0);
+    CodeElem LookUp(uint8_t seg, uint16_t offset, int *idx = nullptr);
     void DrawWindow();
     void DrawContent();
     void DrawMonitor();

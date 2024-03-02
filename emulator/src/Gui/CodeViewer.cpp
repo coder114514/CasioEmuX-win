@@ -18,6 +18,7 @@
 
 casioemu::Emulator *m_emu = nullptr;
 
+// 0:0000~0:00FF is vector table, should be handled
 CodeViewer::CodeViewer(std::string path) {
     src_path = path;
     std::ifstream f(src_path, std::ios::in);
@@ -54,8 +55,11 @@ CodeViewer::CodeViewer(std::string path) {
     is_loaded = true;
 }
 
-bool elem_cmp(const CodeElem &a, const CodeElem &b) {
-    return a.segment == b.segment && a.offset < b.offset;
+bool operator<(const CodeElem &a, const CodeElem &b) {
+    if (a.segment != b.segment)
+        return a.segment < b.segment;
+    else
+        return a.offset < b.offset;
 }
 
 CodeViewer::~CodeViewer() {
@@ -66,14 +70,12 @@ CodeElem CodeViewer::LookUp(uint8_t seg, uint16_t offset, int *idx) {
     CodeElem target;
     target.offset = offset;
     target.segment = seg;
-    auto it = std::lower_bound(codes.begin(), codes.end(), target, elem_cmp);
-    if (it == codes.end()) {
+    auto it = std::lower_bound(codes.begin(), codes.end(), target);
+    if (it == codes.end())
         it = codes.begin();
-        // casioemu::logger::Info("fFound element ! at: %d seg, %x off %s\n",it->segment,it->offset,it->srcbuf);
-    }
     if (idx)
         *idx = it - codes.begin();
-    return {.segment = it->segment, .offset = it->offset};
+    return CodeElem(it->segment, it->offset);
 }
 
 bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool bp_mode) {
