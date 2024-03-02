@@ -29,14 +29,13 @@ private:
     char adrbuf[9]{0};
     int max_row = 0;
     int max_col = 0;
-    int cur_col = 0;
+    int cur_row = 0;
 
     bool is_loaded = false;
     bool edit_active = false;
     bool need_roll = false;
-    uint32_t selected_addr = -1;
-    bool bp_triggered = false;
-    uint32_t bp = -1;
+    int64_t selected_addr = -1;
+    int64_t bp = -1;
 
 public:
     uint8_t debug_flags = DEBUG_BREAKPOINT;

@@ -389,7 +389,7 @@ namespace casioemu {
             if (code_viewer) {
                 if ((code_viewer->debug_flags & DEBUG_BREAKPOINT) && code_viewer->TryTrigBP(reg_csr, reg_pc)) {
                     emulator.SetPaused(true);
-                } else if ((code_viewer->debug_flags) & DEBUG_STEP && code_viewer->TryTrigBP(reg_csr, reg_pc, false)) {
+                } else if ((code_viewer->debug_flags & DEBUG_STEP) && code_viewer->TryTrigBP(reg_csr, reg_pc, false)) {
                     emulator.SetPaused(true);
                 }
             }

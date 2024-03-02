@@ -85,18 +85,20 @@ bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool bp_mode) {
             CodeElem e = codes[it->first];
             if (e.segment == seg && e.offset == offset) {
                 break_points[it->first] = 2;
-                cur_col = it->first;
+                cur_row = it->first;
                 need_roll = true;
+                bp = it->first;
                 return true;
             }
         }
     }
-    if (!bp_mode && (debug_flags & DEBUG_STEP || debug_flags & DEBUG_RET_TRACE)) {
+    if (!bp_mode && (debug_flags & DEBUG_STEP || debug_flags & DEBUG_RET_TRACE)) { // pause for step/trace
         int idx = 0;
         LookUp(seg, offset, &idx);
         break_points[idx] = 2;
-        cur_col = idx;
+        cur_row = idx;
         need_roll = true;
+        bp = idx;
         return true;
     }
     return false;
@@ -114,59 +116,54 @@ void CodeViewer::DrawContent() {
                 if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
                     break_points[line_i] = 1;
                 }
-            } else {
-                if (it->second == 1) {
-                    ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "[ x ]");
-                    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
-                        break_points.erase(line_i);
-                    }
-                } else { // it->second == 2
-                    // the break point is triggered!
-                    bp_triggered = true;
-                    bp = line_i;
-                    ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "[ > ]");
+            } else if (it->second == 1) {
+                ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "[ x ]");
+                if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
+                    break_points.erase(line_i);
                 }
+            } else { // it->second == 2
+                // the break point is triggered!
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "[ > ]");
             }
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(1.0, 1.0, 0.0, 1.0), "%d:%04x", e.segment, e.offset);
             ImGui::SameLine();
-            if (selected_addr != (uint32_t)e.segment * 0x10000 + e.offset) { // not selected
+            if (selected_addr != (int64_t)e.segment * 0x10000 + e.offset) { // not selected
                 ImGui::Text("%s", e.srcbuf);
                 if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
                     selected_addr = e.segment * 0x10000 + e.offset;
-                    cur_col = line_i;
+                    cur_row = line_i;
                     edit_active = true;
                 }
             } else { // selected
                 if (edit_active) {
                     ImGui::InputText("##data", e.srcbuf, strlen(e.srcbuf), ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_AlwaysOverwrite);
                     // ImGui::SetKeyboardFocusHere();
-                    //  if(!ImGui::IsItemActive())
-                    //  {
-                    //      edit_active=false;
-                    //  }
+                    // if (!ImGui::IsItemActive()) {
+                    //     edit_active = false;
+                    // }
                     if (ImGui::IsWindowFocused()) {
                         if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow))) {
-                            cur_col++;
-                            if (cur_col >= max_row)
-                                cur_col = max_row;
+                            cur_row++;
+                            if (cur_row >= max_row)
+                                cur_row = max_row;
                             need_roll = true;
                         } else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow))) {
-                            cur_col--;
-                            if (cur_col < 0)
-                                cur_col = 0;
+                            cur_row--;
+                            if (cur_row < 0)
+                                cur_row = 0;
                             need_roll = true;
                         }
                     }
-                }
+                } else {}
             }
         }
     }
     if (need_roll) {
-        float v = (float)cur_col / max_row * ImGui::GetScrollMaxY();
+        float v = (float)cur_row / max_row * ImGui::GetScrollMaxY();
         ImGui::SetScrollY(v);
         need_roll = false;
-        selected_addr = codes[cur_col].segment * 0x10000 + codes[cur_col].offset;
+        selected_addr = codes[cur_row].segment * 0x10000 + codes[cur_row].offset;
     }
 }
 
@@ -222,12 +219,12 @@ void CodeViewer::DrawWindow() {
     ImGui::Checkbox("STEP", &step_debug);
     ImGui::SameLine();
     ImGui::Checkbox("TRACE", &trace_debug);
-    if (bp_triggered) {
+    if (bp != -1) {
         ImGui::SameLine();
         if (ImGui::Button("Continue?")) {
             break_points.erase(bp);
             m_emu->SetPaused(false);
-            bp_triggered = false, bp = -1;
+            bp = -1;
         }
     }
 
@@ -242,6 +239,6 @@ void CodeViewer::JumpTo(uint8_t seg, uint16_t offset) {
     int idx = 0;
     // printf("jumpto:seg%d\n",seg);
     LookUp(seg, offset, &idx);
-    cur_col = idx;
+    cur_row = idx;
     need_roll = true;
 }
