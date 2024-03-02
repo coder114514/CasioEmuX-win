@@ -32,7 +32,6 @@ private:
     int cur_row = 0;
 
     bool is_loaded = false;
-    bool edit_active = false;
     bool need_roll = false;
     int64_t selected_addr = -1;
     int64_t bp = -1;

@@ -52,26 +52,25 @@ namespace casioemu {
     }
 
     void CPU::OP_POPL() {
-        if (impl_operands[0].value & 1)
+        if (impl_operands[0].value & 1) // POP ...,EA,...
             reg_ea = Pop16();
-        if (impl_operands[0].value & 8) {
+        if (impl_operands[0].value & 8) { // POP ...,LR,...
             /**
              * Sometimes a function calls another function in one branch, and
              * does not call another function in another branch. In that case
              * the compiler may decide to do a `push lr` / `pop lr` in only the
              * branch that has to save `lr`.
              */
-            if (!stack.empty() && stack.back().lr_pushed &&
-                stack.back().lr_push_address == reg_sp)
+            if (!stack.empty() && stack.back().lr_pushed && stack.back().lr_push_address == reg_sp)
                 stack.back().lr_pushed = false;
 
             reg_lr = Pop16();
             if (memory_model == MM_LARGE)
                 reg_lcsr = Pop16() & 0x000F;
         }
-        if (impl_operands[0].value & 4)
+        if (impl_operands[0].value & 4) // POP ...,PSW,...
             reg_psw = Pop16();
-        if (impl_operands[0].value & 2) {
+        if (impl_operands[0].value & 2) { // POP ...,PC,...
             int oldsp = reg_sp;
             reg_pc = Pop16();
             if (memory_model == MM_LARGE)
@@ -83,8 +82,7 @@ namespace casioemu {
                     }
                 }
             }
-            if (!stack.empty() && stack.back().lr_pushed &&
-                stack.back().lr_push_address == oldsp)
+            if (!stack.empty() && stack.back().lr_pushed && stack.back().lr_push_address == oldsp)
                 stack.pop_back();
         }
     }

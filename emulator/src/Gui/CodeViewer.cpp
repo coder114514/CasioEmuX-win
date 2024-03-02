@@ -78,6 +78,10 @@ CodeElem CodeViewer::LookUp(uint8_t seg, uint16_t offset, int *idx) {
     return CodeElem(it->segment, it->offset);
 }
 
+/**
+ * called after an instruction is done (in CPU.cpp) or
+ * a POP PC is executed (in CPUPushPop.cpp)
+ */
 bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool bp_mode) {
     for (auto it = break_points.begin(); it != break_points.end(); it++) {
         if (it->second == 1) {
@@ -131,31 +135,27 @@ void CodeViewer::DrawContent() {
             if (selected_addr != (int64_t)e.segment * 0x10000 + e.offset) { // not selected
                 ImGui::Text("%s", e.srcbuf);
                 if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
-                    selected_addr = e.segment * 0x10000 + e.offset;
                     cur_row = line_i;
-                    edit_active = true;
+                    need_roll = true;
                 }
             } else { // selected
-                if (edit_active) {
-                    ImGui::InputText("##data", e.srcbuf, strlen(e.srcbuf), ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_AlwaysOverwrite);
-                    // ImGui::SetKeyboardFocusHere();
-                    // if (!ImGui::IsItemActive()) {
-                    //     edit_active = false;
-                    // }
-                    if (ImGui::IsWindowFocused()) {
-                        if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow))) {
-                            cur_row++;
-                            if (cur_row >= max_row)
-                                cur_row = max_row;
-                            need_roll = true;
-                        } else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow))) {
-                            cur_row--;
-                            if (cur_row < 0)
-                                cur_row = 0;
-                            need_roll = true;
-                        }
+                ImGui::InputText("##data", e.srcbuf, strlen(e.srcbuf), ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_AlwaysOverwrite);
+                if (ImGui::IsWindowFocused()) {
+                    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow))) {
+                        cur_row++;
+                        if (cur_row >= max_row)
+                            cur_row = max_row;
+                        need_roll = true;
+                    } else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow))) {
+                        cur_row--;
+                        if (cur_row < 0)
+                            cur_row = 0;
+                        need_roll = true;
                     }
-                } else {}
+                    if (!ImGui::IsItemActive()) {
+                        selected_addr = -1;
+                    }
+                }
             }
         }
     }
@@ -218,7 +218,7 @@ void CodeViewer::DrawWindow() {
     ImGui::SameLine();
     ImGui::Checkbox("STEP", &step_debug);
     ImGui::SameLine();
-    ImGui::Checkbox("TRACE", &trace_debug);
+    ImGui::Checkbox("RET TRACE", &trace_debug);
     if (bp != -1) {
         ImGui::SameLine();
         if (ImGui::Button("Continue?")) {
@@ -228,16 +228,15 @@ void CodeViewer::DrawWindow() {
         }
     }
 
-    // ImGui::BeginChild("##scrolling");
+    ImGui::BeginChild("##scrolling");
     DrawMonitor();
-    // ImGui::EndChild();
+    ImGui::EndChild();
     ImGui::End();
     debug_flags = DEBUG_BREAKPOINT | (step_debug ? DEBUG_STEP : 0) | (trace_debug ? DEBUG_RET_TRACE : 0);
 }
 
 void CodeViewer::JumpTo(uint8_t seg, uint16_t offset) {
     int idx = 0;
-    // printf("jumpto:seg%d\n",seg);
     LookUp(seg, offset, &idx);
     cur_row = idx;
     need_roll = true;

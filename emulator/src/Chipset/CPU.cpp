@@ -11,7 +11,7 @@
 
 namespace casioemu {
     CPU::OpcodeSource CPU::opcode_sources[] = {
-        //           function,                     hints, main mask, operand {size, mask, shift} x2
+        // function, hints, main mask, operand {size, mask, shift} x2
         // * Arithmetic Instructions
         {&CPU::OP_ADD, H_WB, 0x8001, {{1, 0x000F, 8}, {1, 0x000F, 4}}},
         {&CPU::OP_ADD, H_WB, 0x1000, {{1, 0x000F, 8}, {0, 0x00FF, 0}}},
@@ -441,7 +441,7 @@ namespace casioemu {
         output << std::hex << std::setfill('0') << std::uppercase;
         for (StackFrame frame : stack) {
             output << "  function "
-                   << std::setw(6) << (((size_t)frame.new_csr) << 16 | frame.new_pc)
+                   << frame.new_csr << ":" << frame.new_pc
                    << " returns to " << std::setw(6);
             if (frame.lr_pushed) {
                 uint16_t saved_lr, saved_lcsr = 0;
@@ -451,12 +451,12 @@ namespace casioemu {
                            mmu.ReadData(frame.lr_push_address);
                 if (memory_model == MM_LARGE)
                     saved_lcsr = mmu.ReadData(frame.lr_push_address + 2);
-                output << (((size_t)saved_lcsr) << 16 | saved_lr);
+                output << saved_lcsr << ":" << saved_lr;
 
                 output << " - lr pushed at "
                        << std::setw(4) << frame.lr_push_address;
             } else {
-                output << (((size_t)reg_lcsr) << 16 | reg_lr);
+                output << reg_lcsr << ":" << reg_lr;
             }
             output << '\n';
         }
