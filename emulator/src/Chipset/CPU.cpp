@@ -442,14 +442,15 @@ namespace casioemu {
         output << std::hex << std::setfill('0') << std::uppercase;
         for (StackFrame frame : stack) {
             output << "  function "
-                   << frame.new_csr << ":" << frame.new_pc << " returns to ";
+                   << frame.new_csr << ":" << std::setw(4) << frame.new_pc
+                   << " returns to ";
             if (frame.lr_pushed) {
                 uint16_t saved_lr, saved_lcsr = 0;
                 MMU &mmu = emulator.chipset.mmu;
                 saved_lr = ((uint16_t)mmu.ReadData(frame.lr_push_address + 1)) << 8 | mmu.ReadData(frame.lr_push_address);
                 if (memory_model == MM_LARGE)
-                    saved_lcsr = mmu.ReadData(frame.lr_push_address + 2);
-                output << saved_lcsr << ":" << saved_lr;
+                    saved_lcsr = mmu.ReadData(frame.lr_push_address + 2) & 0xF;
+                output << saved_lcsr << ":" << std::setw(4) << saved_lr;
 
                 output << " - lr pushed at "
                        << std::setw(4) << frame.lr_push_address;
