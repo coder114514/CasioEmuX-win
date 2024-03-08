@@ -3,10 +3,8 @@
 
 #include <SDL.h>
 
-namespace casioemu
-{
-	struct ColourInfo
-	{
-		int r, g, b;
-	};
-}
+namespace casioemu {
+    struct ColourInfo {
+        int r, g, b;
+    };
+} // namespace casioemu

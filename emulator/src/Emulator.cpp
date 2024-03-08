@@ -101,7 +101,7 @@ namespace casioemu {
                     iteration_end = now;
             }
         });
-		tick_thread->detach();
+        tick_thread->detach();
 
         RunStartupScript();
 

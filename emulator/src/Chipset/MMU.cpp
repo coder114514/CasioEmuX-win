@@ -36,7 +36,7 @@ namespace casioemu {
             MMU *mmu = *(MMU **)lua_topointer(lua_state, 1);
             size_t offset = lua_tointeger(lua_state, 2);
             if (offset & 1) {
-				logger::Info("lua code[...]: offset has LSB set, rounding to even\n");
+                logger::Info("lua code[...]: offset has LSB set, rounding to even\n");
                 offset ^= 1;
             }
             lua_pushinteger(lua_state, mmu->ReadCode(offset));
@@ -139,7 +139,7 @@ namespace casioemu {
         size_t segment_index = offset >> 16;
         size_t segment_offset = offset & 0xFFFF;
 
-		// segment_index %= 4;
+        // segment_index %= 4;
 
         if (!segment_index)
             return (((uint16_t)emulator.chipset.rom_data[segment_offset + 1]) << 8) | emulator.chipset.rom_data[segment_offset];
@@ -166,7 +166,7 @@ namespace casioemu {
         size_t segment_index = offset >> 16;
         size_t segment_offset = offset & 0xFFFF;
 
-		// segment_index %= 4;
+        // segment_index %= 4;
 
         MemoryByte *segment = segment_dispatch[segment_index];
         if (!segment) {
@@ -201,7 +201,7 @@ namespace casioemu {
         size_t segment_index = offset >> 16;
         size_t segment_offset = offset & 0xFFFF;
 
-		// segment_index %= 4;
+        // segment_index %= 4;
 
         MemoryByte *segment = segment_dispatch[segment_index];
         if (!segment) {
