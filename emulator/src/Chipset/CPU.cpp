@@ -238,7 +238,6 @@ namespace casioemu {
     void CPU::SetupInternals() {
         SetupOpcodeDispatch();
         SetupRegisterProxies();
-
         impl_csr_mask = emulator.GetModelInfo("csr_mask");
     }
 
@@ -335,8 +334,7 @@ namespace casioemu {
     }
 
     uint16_t CPU::Fetch() {
-        if (reg_csr.raw & ~impl_csr_mask)
-            reg_csr.raw &= impl_csr_mask;
+        reg_csr.raw &= impl_csr_mask;
         if (reg_pc.raw & 1)
             reg_pc.raw &= ~1;
         uint16_t opcode = emulator.chipset.mmu.ReadCode((reg_csr.raw << 16) | reg_pc.raw);
@@ -451,9 +449,7 @@ namespace casioemu {
                 if (memory_model == MM_LARGE)
                     saved_lcsr = mmu.ReadData(frame.lr_push_address + 2) & 0xF;
                 output << saved_lcsr << ":" << std::setw(4) << saved_lr;
-
-                output << " - lr pushed at "
-                       << std::setw(4) << frame.lr_push_address;
+                output << " - lr pushed at " << std::setw(4) << frame.lr_push_address;
             } else {
                 output << reg_lcsr << ":" << reg_lr;
             }

@@ -215,7 +215,7 @@ void CodeViewer::DrawWindow() {
     ImGui::SameLine();
     ImGui::Checkbox("STEP", &step_debug);
     ImGui::SameLine();
-    ImGui::Checkbox("RET TRACE", &trace_debug);
+    ImGui::Checkbox("TRACE", &trace_debug);
     if (bp != -1) {
         ImGui::SameLine();
         if (ImGui::Button("Continue?")) {

@@ -3,8 +3,6 @@
 
 #include "Peripheral.hpp"
 
-namespace casioemu
-{
-	Peripheral *CreateScreen(Emulator& emulator);
+namespace casioemu {
+    Peripheral *CreateScreen(Emulator &emulator);
 }
-
