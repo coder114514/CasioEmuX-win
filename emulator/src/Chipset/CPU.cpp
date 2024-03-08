@@ -11,7 +11,7 @@
 
 namespace casioemu {
     CPU::OpcodeSource CPU::opcode_sources[] = {
-        //       function                hints          main mask    operand {size, mask, shift} x2
+        //       function                hints            opcode    operand {size, mask, shift} x2
         // * Arithmetic Instructions
         {&CPU::OP_ADD        , H_WB                     , 0x8001, {{1, 0x000F,  8}, {1, 0x000F,  4}}},
         {&CPU::OP_ADD        , H_WB                     , 0x1000, {{1, 0x000F,  8}, {0, 0x00FF,  0}}},
