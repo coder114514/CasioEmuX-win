@@ -80,18 +80,16 @@ CodeElem CodeViewer::LookUp(uint8_t seg, uint16_t offset, int *idx) {
 
 /**
  * called before the instruction is executed (for breakpoints/step, in CPU.cpp) or
- * right after a POP PC is executed (for RET TRACE, in CPUPushPop.cpp)
+ * right after a POP PC is executed (for TRACE, in CPUPushPop.cpp)
  */
 bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool bp_mode) {
     for (auto it = break_points.begin(); it != break_points.end(); it++) {
         if (it->second == 1) {
-            // TODO: We ignore a second trigger
             CodeElem e = codes[it->first];
             if (e.segment == seg && e.offset == offset) {
-                break_points[it->first] = 2;
                 cur_row = it->first;
-                need_roll = true;
                 bp = it->first;
+                need_roll = true;
                 return true;
             }
         }
@@ -99,10 +97,9 @@ bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool bp_mode) {
     if (!bp_mode && (debug_flags & DEBUG_STEP || debug_flags & DEBUG_RET_TRACE)) { // pause for step/trace
         int idx = 0;
         LookUp(seg, offset, &idx);
-        break_points[idx] = 2;
         cur_row = idx;
-        need_roll = true;
         bp = idx;
+        need_roll = true;
         return true;
     }
     return false;
@@ -113,21 +110,22 @@ void CodeViewer::DrawContent() {
     c.Begin(max_row, ImGui::GetTextLineHeight());
     while (c.Step()) {
         for (int line_i = c.DisplayStart; line_i < c.DisplayEnd; line_i++) {
+            if (line_i == bp) {
+                // the break point is triggered!
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "[ > ]");
+            }
             CodeElem e = codes[line_i];
             auto it = break_points.find(line_i);
-            if (it == break_points.end()) {
+            if (it == break_points.end() || !break_points[line_i]) {
                 ImGui::Text("[ o ]");
                 if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
                     break_points[line_i] = 1;
                 }
-            } else if (it->second == 1) {
+            } else {
                 ImGui::TextColored(ImVec4(1.0, 0.0, 0.0, 1.0), "[ x ]");
                 if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
-                    break_points.erase(line_i);
+                    break_points[line_i] = 0;
                 }
-            } else { // it->second == 2
-                // the break point is triggered!
-                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "[ > ]");
             }
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(1.0, 1.0, 0.0, 1.0), "%d:%04x", e.segment, e.offset);
@@ -218,8 +216,9 @@ void CodeViewer::DrawWindow() {
     ImGui::Checkbox("TRACE", &trace_debug);
     if (bp != -1) {
         ImGui::SameLine();
-        if (ImGui::Button("Continue?")) {
-            break_points.erase(bp);
+        if (ImGui::Button("Continue")) {
+            if (!step_debug && !trace_debug)
+                break_points[bp] = 0;
             m_emu->SetPaused(false);
             bp = -1;
         }
