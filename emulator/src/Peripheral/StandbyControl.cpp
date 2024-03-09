@@ -23,7 +23,6 @@ namespace casioemu {
                 StandbyControl *self = (StandbyControl *)(region->userdata);
 
                 if (data & 0x01) {
-                    logger::Info("StandbyControl: Chipset halted!");
                     self->emulator.chipset.Halt();
                     return;
                 }
