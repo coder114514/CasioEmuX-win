@@ -110,13 +110,12 @@ void CodeViewer::DrawContent() {
     c.Begin(max_row, ImGui::GetTextLineHeight());
     while (c.Step()) {
         for (int line_i = c.DisplayStart; line_i < c.DisplayEnd; line_i++) {
+            CodeElem e = codes[line_i];
+            auto it = break_points.find(line_i);
             if (line_i == bp) {
                 // the break point is triggered!
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "[ > ]");
-            }
-            CodeElem e = codes[line_i];
-            auto it = break_points.find(line_i);
-            if (it == break_points.end() || !break_points[line_i]) {
+            } else if (it == break_points.end() || !break_points[line_i]) {
                 ImGui::Text("[ o ]");
                 if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
                     break_points[line_i] = 1;
