@@ -13,7 +13,6 @@ namespace casioemu {
                 StandbyControl *self = (StandbyControl *)(region->userdata);
                 if ((data & 0xF0) == 0xA0 && (self->stpacp_last & 0xF0) == 0x50) {
                     self->stop_acceptor_enabled = true;
-                    logger::Info("StandbyControl: Stop acceptor enabled!");
                 }
                 self->stpacp_last = data;
             },
