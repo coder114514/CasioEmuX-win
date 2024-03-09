@@ -17,12 +17,14 @@ namespace casioemu {
         if (description.empty())
             description = "ROM/Segment" + std::to_string(region_base >> 16);
 
-        MMURegion::WriteFunction write_function = strict_memory ? [](MMURegion *region, size_t address, uint8_t data) {
-            logger::Info("ROM::[region write lambda]: attempt to write %02hhX to %06zX\n", data, address);
-            region->emulator->HandleMemoryError();
-        }
-                                                                : [](MMURegion *, size_t, uint8_t) {
-                                                                  };
+        MMURegion::WriteFunction write_function =
+            strict_memory
+                ? [](MMURegion *region, size_t address, uint8_t data) {
+                      logger::Info("ROM::[region write lambda]: attempt to write %02hhX to %06zX\n", data, address);
+                      region->emulator->HandleMemoryError();
+                  }
+                : [](MMURegion *, size_t, uint8_t) {
+                  };
 
         if (offset >= 0)
             region.Setup(
