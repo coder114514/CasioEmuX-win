@@ -29,7 +29,6 @@ namespace casioemu {
                 }
 
                 if (data & 0x02 && self->stop_acceptor_enabled) {
-                    logger::Info("StandbyControl: Chipset stopped!");
                     self->stop_acceptor_enabled = false;
                     self->emulator.chipset.Stop();
                     return;
