@@ -187,18 +187,21 @@ namespace casioemu {
             return 0;
         });
         lua_setfield(lua_state, -2, "tick");
+
         lua_pushcfunction(lua_state, [](lua_State *lua_state) {
             Emulator *emu = *(Emulator **)lua_topointer(lua_state, 1);
             emu->Shutdown();
             return 0;
         });
         lua_setfield(lua_state, -2, "shutdown");
+
         lua_pushcfunction(lua_state, [](lua_State *lua_state) {
             Emulator *emu = *(Emulator **)lua_topointer(lua_state, 1);
             emu->SetPaused(lua_toboolean(lua_state, 2));
             return 0;
         });
         lua_setfield(lua_state, -2, "set_paused");
+
         lua_model_ref = LUA_REFNIL;
         lua_pushcfunction(lua_state, [](lua_State *lua_state) {
             Emulator *emu = *(Emulator **)lua_topointer(lua_state, 1);
@@ -207,7 +210,6 @@ namespace casioemu {
                 // emu:model() returns the model table
                 lua_geti(lua_state, LUA_REGISTRYINDEX, emu->lua_model_ref);
                 return 1;
-
             case 2:
                 // emu:model(t) sets the model table
                 if (emu->lua_model_ref != LUA_REFNIL)
@@ -220,6 +222,7 @@ namespace casioemu {
             }
         });
         lua_setfield(lua_state, -2, "model");
+
         lua_pre_tick_ref = LUA_REFNIL;
         lua_pushcfunction(lua_state, [](lua_State *lua_state) {
             Emulator *emu = *(Emulator **)lua_topointer(lua_state, 1);
@@ -228,6 +231,7 @@ namespace casioemu {
             return 0;
         });
         lua_setfield(lua_state, -2, "pre_tick");
+
         lua_post_tick_ref = LUA_REFNIL;
         lua_pushcfunction(lua_state, [](lua_State *lua_state) {
             Emulator *emu = *(Emulator **)lua_topointer(lua_state, 1);
@@ -236,6 +240,7 @@ namespace casioemu {
             return 0;
         });
         lua_setfield(lua_state, -2, "post_tick");
+
         lua_setfield(lua_state, -2, "__index");
         lua_pushcfunction(lua_state, [](lua_State *) {
             return 0;
@@ -353,7 +358,6 @@ namespace casioemu {
 
     void Emulator::Shutdown() {
         std::lock_guard<decltype(access_mx)> access_lock(access_mx);
-
         running = false;
     }
 

@@ -225,19 +225,23 @@ namespace casioemu {
         screen_buffer = new uint8_t[(N_ROW + 1) * ROW_SIZE];
 
         region_buffer.Setup(
-            0xF800, (N_ROW + 1) * ROW_SIZE, "Screen/Buffer", this, [](MMURegion *region, size_t offset) {
-			offset -= region->base;
-			if (offset % ROW_SIZE >= ROW_SIZE_DISP)
-				return (uint8_t)0;
-			return ((Screen *)region->userdata)->screen_buffer[offset]; }, [](MMURegion *region, size_t offset, uint8_t data) {
-			offset -= region->base;
-			if (offset % ROW_SIZE >= ROW_SIZE_DISP)
-				return;
-
-			auto this_obj = (Screen *)region->userdata;
-			// * Set require_frame to true only if the value changed.
-			this_obj->require_frame |= this_obj->screen_buffer[offset] != data;
-			this_obj->screen_buffer[offset] = data; }, emulator);
+            0xF800, (N_ROW + 1) * ROW_SIZE, "Screen/Buffer", this,
+            [](MMURegion *region, size_t offset) {
+                offset -= region->base;
+                if (offset % ROW_SIZE >= ROW_SIZE_DISP)
+                    return (uint8_t)0;
+                return ((Screen *)region->userdata)->screen_buffer[offset];
+            },
+            [](MMURegion *region, size_t offset, uint8_t data) {
+                offset -= region->base;
+                if (offset % ROW_SIZE >= ROW_SIZE_DISP)
+                    return;
+                auto this_obj = (Screen *)region->userdata;
+                // * Set require_frame to true only if the value changed.
+                this_obj->require_frame |= this_obj->screen_buffer[offset] != data;
+                this_obj->screen_buffer[offset] = data;
+            },
+            emulator);
 
         region_range.Setup(0xF030, 1, "Screen/Range", this, DefaultRead<uint8_t, 0x07, &Screen::screen_range>,
                            SetRequireFrameWrite<uint8_t, 0x07, &Screen::screen_range>, emulator);
