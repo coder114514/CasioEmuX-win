@@ -1,3 +1,4 @@
 .vscode
 *.exe
-./emulator/build.bat
+*\build.bat
+*\build.sh
