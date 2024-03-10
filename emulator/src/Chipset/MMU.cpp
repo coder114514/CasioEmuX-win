@@ -166,7 +166,6 @@ namespace casioemu {
 
         MemoryByte *segment = segment_dispatch[segment_index];
         if (!segment) {
-            // logger::Info("read from offset %04zX of unmapped segment %02zX\n", segment_offset, segment_index);
             emulator.HandleMemoryError();
             return 0;
         }
@@ -182,7 +181,6 @@ namespace casioemu {
             }
         }
         if (!region) {
-            // logger::Info("read from unmapped offset %04zX of segment %02zX\n", segment_offset, segment_index);
             emulator.HandleMemoryError();
             return 0;
         }

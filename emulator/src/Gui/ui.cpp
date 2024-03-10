@@ -29,9 +29,8 @@ void gui_loop() {
     ImGui::NewFrame();
 
     static MemoryEditor mem_edit;
-    if (n_ram_buffer != nullptr) {
-        mem_edit.DrawWindow("Memory Editor", n_ram_buffer, 0x2100, 0xd000);
-    }
+    if (n_ram_buffer != nullptr)
+        mem_edit.DrawWindow("Memory Editor", n_ram_buffer, 0x2000, 0xd000);
     code_viewer->DrawWindow();
 
     // Rendering

@@ -89,6 +89,8 @@ namespace casioemu {
     }
 
     void Chipset::Reset() {
+        logger::Info("Chipset reset!\n");
+
         data_int_mask = 0;
         data_int_pending = 0;
 
