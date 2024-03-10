@@ -27,7 +27,8 @@
 #include <cstdlib>
 #include <cstring>
 
-#include <editline/readline.h>
+#include <readline/history.h>
+#include <readline/readline.h>
 
 using namespace casioemu;
 
@@ -73,8 +74,7 @@ int main(int argc, char *argv[]) {
         if (err && err != ENOENT)
             PANIC("error while reading history file: %s\n", std::strerror(err));
     }
-    
-    static std::atomic<bool> got_inp(false);
+
     {
         Emulator emulator(argv_map);
         m_emu = &emulator;
@@ -88,19 +88,21 @@ int main(int argc, char *argv[]) {
 
         test_gui();
         std::thread console_input_thread([&] {
+            struct terminate_thread {};
+            rl_event_hook = []() {
+                if (!running)
+                    throw terminate_thread{};
+                return 0;
+            };
             while (1) {
                 char *console_input_c_str;
-                got_inp = false;
-                std::thread readline_thread([&] {
-                    sprintf(pr, "In [%d]: ", ++inp_cnt);
+                sprintf(pr, "In [%d]: ", ++inp_cnt);
+                try {
                     console_input_c_str = readline(pr);
-                    got_inp = true;
-                });
-                readline_thread.detach();
-
-                while (!got_inp)
-                    if (!running)
-                        return;
+                } catch (terminate_thread) {
+                    rl_cleanup_after_signal();
+                    return;
+                }
 
                 if (console_input_c_str == NULL) {
                     if (argv_map.find("exit_on_console_shutdown") != argv_map.end()) {
@@ -198,9 +200,8 @@ int main(int argc, char *argv[]) {
         console_input_thread.join();
     }
 
-    if (!got_inp)
-        std::cout << std::endl;
-    std::cout << "Goodbye" << std::endl;
+    std::cout << std::endl;
+    rl_deprep_terminal();
 
     IMG_Quit();
     SDL_Quit();
