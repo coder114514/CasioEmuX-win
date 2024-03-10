@@ -145,13 +145,13 @@ namespace casioemu {
         MemoryByte *segment = segment_dispatch[segment_index];
         if (!segment) {
             emulator.HandleMemoryError();
-            return 0;
+            return 0xFF;
         }
 
         MMURegion *region = segment[segment_offset].region;
         if (!region) {
             emulator.HandleMemoryError();
-            return 0;
+            return 0xFF;
         }
 
         return (((uint16_t)region->read(region, offset + 1)) << 8) | region->read(region, offset);
@@ -167,7 +167,7 @@ namespace casioemu {
         MemoryByte *segment = segment_dispatch[segment_index];
         if (!segment) {
             emulator.HandleMemoryError();
-            return 0;
+            return 0xFF;
         }
 
         MemoryByte &byte = segment[segment_offset];
@@ -182,7 +182,7 @@ namespace casioemu {
         }
         if (!region) {
             emulator.HandleMemoryError();
-            return 0;
+            return 0xFF;
         }
 
         return region->read(region, offset);
