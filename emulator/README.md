@@ -3,7 +3,11 @@
 An emulator and disassembler for the CASIO calculator series using the nX-U8/100 core ported to windows.
 With debuggers.
 
-building: use msys2 mingw64 env
+## Building
+
+Download MSYS2. Run build.sh in MSYS2 MINGW64 environment.
+
+Only supports x64 architecture for now.
 
 ## Options
 
@@ -11,7 +15,7 @@ building: use msys2 mingw64 env
 
 `model=<directory>` model directory, which should contain interface.png, model.lua, rom.bin(you can find it elsewhere) and _disas.txt(use disas-cpp on rom.bin to obtain this file)
 
-#### optional:
+#### optional
 
 `script=<lua script path>` the lua script that runs on startup
 
