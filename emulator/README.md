@@ -3,24 +3,32 @@
 An emulator and disassembler for the CASIO calculator series using the nX-U8/100 core ported to windows.
 With debuggers.
 
-To build it, install tdm-gcc and run build32.bat or build64.bat (depending on your machine's architecture).
+building: use msys2 mingw64 env
 
-The dlls needed by the program (SDL2.dll, SDL2_image.dll) are in the `dlls` directory.
+## Options
 
-## Syntax
-
-`casioemu <key1>=<value1> <key2>=<value2> ...`
+#### mandatory
 
 `model=<directory>` model directory, which should contain interface.png, model.lua, rom.bin(you can find it elsewhere) and _disas.txt(use disas-cpp on rom.bin to obtain this file)
 
-these arguments are optional:
+#### optional:
 
-`script=<xxx.lua>` the supplied lua script will run on startup
+`script=<lua script path>` the lua script that runs on startup
 
-`exit_on_console_shutdown=true/false` pretty self-evident, default to false
+`exit_on_console_shutdown` shutdown the entire emulator when console reads EOF
 
-`history=<history file path>` the file that stores your input history
+`history=<history file path>` the file that stores input history
 
-`width=<xxx>`, `height=<xxx>` the width of height of the emulator window
+`width=<xxx>`, `height=<xxx>` the width of height of the calculator window
 
-`paused` if supplied, the emulator will pause on startup
+`paused` pause the emulator after startup
+
+`pause_on_mem_error` pause the emulator when there's memory error
+
+`ram=<ram iamge path>` the file that stores ram iamge
+
+`preserve_ram` save the ram into the ram image file after exit
+
+`clean_ram` do not load the ram image on startup
+
+`strict_memory` treat writes to the rom as memory errors
