@@ -28,30 +28,40 @@ namespace casioemu {
         region_input_filter.Setup(0xF042, 1, "Keyboard/InputFilter", &input_filter, MMURegion::DefaultRead<uint8_t>, MMURegion::DefaultWrite<uint8_t>, emulator);
 
         region_ko_mask.Setup(
-            0xF044, 2, "Keyboard/KOMask", this, [](MMURegion *region, size_t offset) {
-			offset -= region->base;
-			Keyboard *keyboard = ((Keyboard *)region->userdata);
-			return (uint8_t)((keyboard->keyboard_out_mask & 0x03FF) >> (offset * 8)); }, [](MMURegion *region, size_t offset, uint8_t data) {
-			offset -= region->base;
-			Keyboard *keyboard = ((Keyboard *)region->userdata);
-			keyboard->keyboard_out_mask &= ~(((uint16_t)0xFF) << (offset * 8));
-			keyboard->keyboard_out_mask |= ((uint16_t)data) << (offset * 8);
-			keyboard->keyboard_out_mask &= 0x03FF;
-			if (!offset)
-				keyboard->RecalculateKI(); }, emulator);
+            0xF044, 2, "Keyboard/KOMask", this,
+            [](MMURegion *region, size_t offset) {
+                offset -= region->base;
+                Keyboard *keyboard = ((Keyboard *)region->userdata);
+                return (uint8_t)((keyboard->keyboard_out_mask & 0x03FF) >> (offset * 8));
+            },
+            [](MMURegion *region, size_t offset, uint8_t data) {
+                offset -= region->base;
+                Keyboard *keyboard = ((Keyboard *)region->userdata);
+                keyboard->keyboard_out_mask &= ~(((uint16_t)0xFF) << (offset * 8));
+                keyboard->keyboard_out_mask |= ((uint16_t)data) << (offset * 8);
+                keyboard->keyboard_out_mask &= 0x03FF;
+                if (!offset)
+                    keyboard->RecalculateKI();
+            },
+            emulator);
 
         region_ko.Setup(
-            0xF046, 2, "Keyboard/KO", this, [](MMURegion *region, size_t offset) {
-			offset -= region->base;
-			Keyboard *keyboard = ((Keyboard *)region->userdata);
-			return (uint8_t)((keyboard->keyboard_out & 0x03FF) >> (offset * 8)); }, [](MMURegion *region, size_t offset, uint8_t data) {
-			offset -= region->base;
-			Keyboard *keyboard = ((Keyboard *)region->userdata);
-			keyboard->keyboard_out &= ~(((uint16_t)0xFF) << (offset * 8));
-			keyboard->keyboard_out |= ((uint16_t)data) << (offset * 8);
-			keyboard->keyboard_out &= 0x03FF;
-			if (!offset)
-				keyboard->RecalculateKI(); }, emulator);
+            0xF046, 2, "Keyboard/KO", this,
+            [](MMURegion *region, size_t offset) {
+                offset -= region->base;
+                Keyboard *keyboard = ((Keyboard *)region->userdata);
+                return (uint8_t)((keyboard->keyboard_out & 0x03FF) >> (offset * 8));
+            },
+            [](MMURegion *region, size_t offset, uint8_t data) {
+                offset -= region->base;
+                Keyboard *keyboard = ((Keyboard *)region->userdata);
+                keyboard->keyboard_out &= ~(((uint16_t)0xFF) << (offset * 8));
+                keyboard->keyboard_out |= ((uint16_t)data) << (offset * 8);
+                keyboard->keyboard_out &= 0x03FF;
+                if (!offset)
+                    keyboard->RecalculateKI();
+            },
+            emulator);
 
         if (!real_hardware) {
             keyboard_pd_emu = emulator.GetModelInfo("pd_value");

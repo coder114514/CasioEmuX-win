@@ -26,12 +26,17 @@ namespace casioemu {
             emulator);
 
         region_control.Setup(
-            0xF025, 1, "Timer/Control", this, [](MMURegion *region, size_t) {
-			Timer *timer = (Timer *)region->userdata;
-			return (uint8_t)(timer->data_control & 0x01); }, [](MMURegion *region, size_t, uint8_t data) {
-			Timer *timer = (Timer *)region->userdata;
-			timer->data_control = data & 0x01;
-			timer->raise_required = false; }, emulator);
+            0xF025, 1, "Timer/Control", this,
+            [](MMURegion *region, size_t) {
+                Timer *timer = (Timer *)region->userdata;
+                return (uint8_t)(timer->data_control & 0x01);
+            },
+            [](MMURegion *region, size_t, uint8_t data) {
+                Timer *timer = (Timer *)region->userdata;
+                timer->data_control = data & 0x01;
+                timer->raise_required = false;
+            },
+            emulator);
 
         region_F024.Setup(0xF024, 1, "Timer/Unknown/F024*1", &data_F024, MMURegion::DefaultRead<uint8_t>, MMURegion::DefaultWrite<uint8_t>, emulator);
     }

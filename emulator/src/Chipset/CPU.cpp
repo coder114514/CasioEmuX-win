@@ -451,7 +451,7 @@ namespace casioemu {
                 output << saved_lcsr << ":" << std::setw(4) << saved_lr;
                 output << " - lr pushed at " << std::setw(4) << frame.lr_push_address;
             } else {
-                output << reg_lcsr << ":" << reg_lr;
+                output << reg_lcsr << ":" << std::setw(4) << reg_lr;
             }
             output << '\n';
         }
