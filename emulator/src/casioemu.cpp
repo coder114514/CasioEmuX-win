@@ -90,6 +90,15 @@ int main(int argc, char *argv[]) {
         std::thread console_input_thread([&] {
             struct terminate_thread {};
             rl_event_hook = []() {
+                throw terminate_thread{};
+                return 0;
+            };
+            try {
+                (void)readline("");
+            } catch (terminate_thread) {
+                rl_cleanup_after_signal();
+            } // an ugly hack to make readline not print a extranous line when calling rl_clear_visible_line
+            rl_event_hook = []() {
                 if (!running)
                     throw terminate_thread{};
                 return 0;
