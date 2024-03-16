@@ -98,10 +98,10 @@ function printf(...)
 end
 
 function ins()
-    printf("%02X %02X %02X %02X | %01X:%04X | %02X %01X:%04X", cpu.r0,  cpu.r1,  cpu.r2,  cpu.r3,  cpu.csr,     cpu.pc,    cpu.psw,   cpu.lcsr, cpu.lr)
-    printf("%02X %02X %02X %02X | S %04X | %02X %01X:%04X",    cpu.r4,  cpu.r5,  cpu.r6,  cpu.r7,  cpu.sp,      cpu.epsw1, cpu.ecsr1, cpu.elr1)
-    printf("%02X %02X %02X %02X | A %04X | %02X %01X:%04X",    cpu.r8,  cpu.r9,  cpu.r10, cpu.r11, cpu.ea,      cpu.epsw2, cpu.ecsr2, cpu.elr2)
-    printf("%02X %02X %02X %02X | ELVL %01X | %02X %01X:%04X", cpu.r12, cpu.r13, cpu.r14, cpu.r15, cpu.psw & 3, cpu.epsw3, cpu.ecsr3, cpu.elr3)
+    printf("%02X %02X %02X %02X | %01X:%04X | %02X %01X:%04X", cpu.r0,  cpu.r1,  cpu.r2,  cpu.r3,  cpu.csr, cpu.pc, cpu.psw,   cpu.lcsr,  cpu.lr)
+    printf("%02X %02X %02X %02X | S %04X | %02X %01X:%04X",    cpu.r4,  cpu.r5,  cpu.r6,  cpu.r7,  cpu.sp,          cpu.epsw1, cpu.ecsr1, cpu.elr1)
+    printf("%02X %02X %02X %02X | A %04X | %02X %01X:%04X",    cpu.r8,  cpu.r9,  cpu.r10, cpu.r11, cpu.ea,          cpu.epsw2, cpu.ecsr2, cpu.elr2)
+    printf("%02X %02X %02X %02X | ELVL %01X | %02X %01X:%04X", cpu.r12, cpu.r13, cpu.r14, cpu.r15, cpu.psw & 3,     cpu.epsw3, cpu.ecsr3, cpu.elr3)
 end
 
 function help()
