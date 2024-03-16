@@ -13,31 +13,23 @@ namespace casioemu {
         if (rom_base + size > emulator.chipset.rom_data.size())
             PANIC("Invalid ROM region: base %zx, size %zx\n", rom_base, size);
         uint8_t *data = emulator.chipset.rom_data.data();
-        auto offset = (ssize_t)rom_base - (ssize_t)region_base;
         if (description.empty())
             description = "ROM/Segment" + std::to_string(region_base >> 16);
 
-        MMURegion::WriteFunction write_function =
-            strict_memory
-                ? [](MMURegion *region, size_t address, uint8_t data) {
-                      logger::Info("ROM::[region write lambda]: attempt to write %02hhX to %06zX\n", data, address);
-                      region->emulator->HandleMemoryError();
-                  }
-                : [](MMURegion *, size_t, uint8_t) {
-                  };
+        MMURegion::WriteFunction write_function = [](MMURegion *, size_t, uint8_t) {};
+        if (strict_memory)
+            write_function = [](MMURegion *region, size_t address, uint8_t data) {
+                logger::Info("ROM::[region write lambda]: attempt to write %02hhX to %06zX\n", data, address);
+                region->emulator->HandleMemoryError();
+            };
 
-        if (offset >= 0)
-            region.Setup(
-                region_base, size, description, data + offset, [](MMURegion *region, size_t address) {
-                    return ((uint8_t *)(region->userdata))[address];
-                },
-                write_function, emulator);
-        else
-            region.Setup(
-                region_base, size, description, data + rom_base, [](MMURegion *region, size_t address) {
-                    return ((uint8_t *)(region->userdata))[address - region->base];
-                },
-                write_function, emulator);
+        region.Setup(
+            region_base, size, description, data + rom_base,
+            [](MMURegion *region, size_t address) {
+                return ((uint8_t *)(region->userdata))[address - region->base];
+            },
+            write_function,
+            emulator);
     }
 
     void ROMWindow::Initialise() {

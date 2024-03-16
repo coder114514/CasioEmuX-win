@@ -21,9 +21,8 @@ casioemu::Emulator *m_emu = nullptr;
 CodeViewer::CodeViewer(std::string path) {
     src_path = path;
     std::ifstream f(src_path, std::ios::in);
-    if (!f.is_open()) {
-        casioemu::logger::Info("Fail to open disassembly, so code viewer won't be loaded: %s\n", src_path.c_str());
-    }
+    if (!f.is_open())
+        PANIC("\nFail to open disassembly code src: %s\n", src_path.c_str());
     casioemu::logger::Info("Start to load disassembly ...\n");
     char buf[200], adr[6];
     while (!f.eof()) {

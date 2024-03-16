@@ -10,13 +10,13 @@ namespace casioemu {
     const uint8_t UNMAPPED_VALUE = 0x00;
 
     MMU::MMU(Emulator &_emulator) : emulator(_emulator) {
-        segment_dispatch = new MemoryByte *[0x100];
-        for (size_t ix = 0; ix != 0x100; ++ix)
+        segment_dispatch = new MemoryByte *[0x10];
+        for (size_t ix = 0; ix != 0x10; ++ix)
             segment_dispatch[ix] = nullptr;
     }
 
     MMU::~MMU() {
-        for (size_t ix = 0; ix != 0x100; ++ix)
+        for (size_t ix = 0; ix != 0x10; ++ix)
             if (segment_dispatch[ix])
                 delete[] segment_dispatch[ix];
         delete[] segment_dispatch;
@@ -146,14 +146,18 @@ namespace casioemu {
 
         MemoryByte *segment = segment_dispatch[segment_index];
         if (!segment) {
+#ifdef PRINT_UNMAPPED_MSG
             logger::Info("code read from offset %04zX of unmapped segment %02zX\n", segment_offset, segment_index);
+#endif
             emulator.HandleMemoryError();
             return UNMAPPED_VALUE;
         }
 
         MMURegion *region = segment[segment_offset].region;
         if (!region) {
+#ifdef PRINT_UNMAPPED_MSG
             logger::Info("code read from unmapped offset %04zX of segment %02zX\n", segment_offset, segment_index);
+#endif
             emulator.HandleMemoryError();
             return UNMAPPED_VALUE;
         }
@@ -170,7 +174,9 @@ namespace casioemu {
 
         MemoryByte *segment = segment_dispatch[segment_index];
         if (!segment) {
+#ifdef PRINT_UNMAPPED_MSG
             logger::Info("read from offset %04zX of unmapped segment %02zX\n", segment_offset, segment_index);
+#endif
             emulator.HandleMemoryError();
             return UNMAPPED_VALUE;
         }
@@ -186,7 +192,9 @@ namespace casioemu {
             }
         }
         if (!region) {
+#ifdef PRINT_UNMAPPED_MSG
             logger::Info("read from unmapped offset %04zX of segment %02zX\n", segment_offset, segment_index);
+#endif
             emulator.HandleMemoryError();
             return UNMAPPED_VALUE;
         }
@@ -203,7 +211,9 @@ namespace casioemu {
 
         MemoryByte *segment = segment_dispatch[segment_index];
         if (!segment) {
+#ifdef PRINT_UNMAPPED_MSG
             logger::Info("write to offset %04zX of unmapped segment %02zX (%02zX)\n", segment_offset, segment_index, data);
+#endif
             emulator.HandleMemoryError();
             return;
         }
@@ -219,7 +229,9 @@ namespace casioemu {
             }
         }
         if (!region) {
+#ifdef PRINT_UNMAPPED_MSG
             logger::Info("write to unmapped offset %04zX of segment %02zX (%02zX)\n", segment_offset, segment_index, data);
+#endif
             emulator.HandleMemoryError();
             return;
         }
