@@ -18,19 +18,18 @@
 
 casioemu::Emulator *m_emu = nullptr;
 
-// 0:0000~0:00FF is vector table, should be handled
 CodeViewer::CodeViewer(std::string path) {
     src_path = path;
     std::ifstream f(src_path, std::ios::in);
     if (!f.is_open()) {
-        PANIC("\nFail to open disassembly code src: %s\n", src_path.c_str());
+        casioemu::logger::Info("Fail to open disassembly, so code viewer won't be loaded: %s\n", src_path.c_str());
     }
-    casioemu::logger::Info("Start to read code src ...\n");
-    char buf[200]{0};
-    char adr[6]{0};
+    casioemu::logger::Info("Start to load disassembly ...\n");
+    char buf[200], adr[6];
     while (!f.eof()) {
+        memset(buf, 0, sizeof(buf));
+        memset(adr, 0, sizeof(adr));
         f.getline(buf, 200);
-        // 1sf, extract segment number
         uint8_t seg = buf[1] - '0';
         uint8_t len = strlen(buf);
         if (!len)
@@ -38,19 +37,16 @@ CodeViewer::CodeViewer(std::string path) {
         if (len > max_col)
             max_col = len;
         memcpy(adr, buf + 2, 4);
-        // casioemu::logger::Info("[%s %d %d]\n",adr,seg,len);
         uint16_t offset = std::stoi(adr, 0, 16);
         CodeElem e;
         e.offset = offset;
         e.segment = seg;
-        memset(e.srcbuf, 0, 40);
+        memset(e.srcbuf, 0, sizeof(e.srcbuf));
         memcpy(e.srcbuf, buf + 28, len - 28);
         codes.push_back(e);
-        memset(buf, 0, 200);
-        memset(adr, 0, 6);
     }
     f.close();
-    casioemu::logger::Info("Read src codes over!\n");
+    casioemu::logger::Info("Successfully loaded disassembly!\n");
     max_row = codes.size();
     is_loaded = true;
 }
@@ -78,11 +74,18 @@ CodeElem CodeViewer::LookUp(uint8_t seg, uint16_t offset, int *idx) {
     return CodeElem(it->segment, it->offset);
 }
 
-/**
- * called before the instruction is executed (for breakpoints/step, in CPU.cpp) or
- * right after a POP PC is executed (for TRACE, in CPUPushPop.cpp)
- */
-bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool bp_mode) {
+bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool is_bp) {
+    if (!is_loaded) {
+        return false;
+    }
+    if (!is_bp) { // step/trace
+        int idx = 0;
+        LookUp(seg, offset, &idx);
+        cur_row = idx;
+        bp = idx;
+        need_roll = true;
+        return true;
+    }
     for (auto it = break_points.begin(); it != break_points.end(); it++) {
         if (it->second == 1) {
             CodeElem e = codes[it->first];
@@ -93,14 +96,6 @@ bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool bp_mode) {
                 return true;
             }
         }
-    }
-    if (!bp_mode && (debug_flags & DEBUG_STEP || debug_flags & DEBUG_RET_TRACE)) { // pause for step/trace
-        int idx = 0;
-        LookUp(seg, offset, &idx);
-        cur_row = idx;
-        bp = idx;
-        need_roll = true;
-        return true;
     }
     return false;
 }
@@ -183,13 +178,6 @@ void CodeViewer::DrawWindow() {
         ImGui::End();
         return;
     }
-    ImVec2 sz;
-    h *= 10;
-    w *= max_col;
-    sz.x = w;
-    sz.y = h;
-    // ImGui::SetNextWindowSize(sz);
-    // ImGui::SetNextWindowContentSize(sz);
     ImGui::Begin("Disassemble Window", 0);
     ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetWindowHeight() / 2));
     DrawContent();

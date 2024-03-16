@@ -194,27 +194,27 @@ namespace casioemu {
         {&CPU::OP_DSR        ,               H_DS | H_DW, 0xE300, {{0, 0x00FF,  0}, {0,      0,  0}}},
         {&CPU::OP_DSR        ,               H_DS | H_DW, 0x900F, {{1, 0x000F,  4}, {0,      0,  0}}}};
 
-    //     name  array_size  array_base  stub                                  stub_array
+    //      name  array_size  array_base                        stub                                  stub_array
     CPU::RegisterRecord CPU::register_record_sources[] = {
-        {    "r",    16,      0,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_r},
-        {   "cr",    16,      0,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_cr},
-        {   "pc",     1,      0,        (RegisterStubPointer)&CPU::reg_pc,  nullptr                               },
-        {  "csr",     1,      0,        (RegisterStubPointer)&CPU::reg_csr, nullptr                               },
-        {   "lr",     1,      0,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_elr},
-        { "elr1",     1,      1,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_elr},
-        { "elr2",     1,      2,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_elr},
-        { "elr3",     1,      3,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_elr},
-        { "lcsr",     1,      0,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_ecsr},
-        {"ecsr1",     1,      1,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_ecsr},
-        {"ecsr2",     1,      2,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_ecsr},
-        {"ecsr3",     1,      3,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_ecsr},
-        {  "psw",     1,      0,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_epsw},
-        {"epsw1",     1,      1,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_epsw},
-        {"epsw2",     1,      2,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_epsw},
-        {"epsw3",     1,      3,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_epsw},
-        {   "sp",     1,      0,        (RegisterStubPointer)&CPU::reg_sp,  nullptr                                 },
-        {   "ea",     1,      0,        (RegisterStubPointer)&CPU::reg_ea,  nullptr                                 },
-        {  "dsr",     1,      0,        (RegisterStubPointer)&CPU::reg_dsr, nullptr                                }};
+        {    "r",        16,          0,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_r   },
+        {   "cr",        16,          0,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_cr  },
+        {   "pc",         1,          0,        (RegisterStubPointer)&CPU::reg_pc,  nullptr                                 },
+        {  "csr",         1,          0,        (RegisterStubPointer)&CPU::reg_csr, nullptr                                 },
+        {   "lr",         1,          0,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_elr },
+        { "elr1",         1,          1,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_elr },
+        { "elr2",         1,          2,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_elr },
+        { "elr3",         1,          3,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_elr },
+        { "lcsr",         1,          0,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_ecsr},
+        {"ecsr1",         1,          1,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_ecsr},
+        {"ecsr2",         1,          2,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_ecsr},
+        {"ecsr3",         1,          3,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_ecsr},
+        {  "psw",         1,          0,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_epsw},
+        {"epsw1",         1,          1,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_epsw},
+        {"epsw2",         1,          2,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_epsw},
+        {"epsw3",         1,          3,        nullptr,                            (RegisterStubArrayPointer)&CPU::reg_epsw},
+        {   "sp",         1,          0,        (RegisterStubPointer)&CPU::reg_sp,  nullptr                                 },
+        {   "ea",         1,          0,        (RegisterStubPointer)&CPU::reg_ea,  nullptr                                 },
+        {  "dsr",         1,          0,        (RegisterStubPointer)&CPU::reg_dsr, nullptr                                 }};
 
     void CPU::OP_NOP() {
     }
@@ -262,7 +262,7 @@ namespace casioemu {
 
             for (size_t px = 0; px != permutation_count; ++px) {
                 if (opcode_dispatch[permutation_buffer[px]])
-                    continue;
+                    PANIC("clashing opcode %04X\n", permutation_buffer[px]);
                 opcode_dispatch[permutation_buffer[px]] = &handler_stub;
             }
         }
@@ -334,9 +334,14 @@ namespace casioemu {
     }
 
     uint16_t CPU::Fetch() {
-        reg_csr.raw &= impl_csr_mask;
-        if (reg_pc.raw & 1)
+        if (reg_csr.raw & ~impl_csr_mask) {
+            logger::Info("warning: CSR masked bits set\n");
+            reg_csr.raw &= impl_csr_mask;
+        }
+        if (reg_pc.raw & 1) {
+            logger::Info("warning: PC LSB set\n");
             reg_pc.raw &= ~1;
+        }
         uint16_t opcode = emulator.chipset.mmu.ReadCode((reg_csr.raw << 16) | reg_pc.raw);
         reg_pc.raw = (uint16_t)(reg_pc.raw + 2);
         return opcode;
@@ -355,7 +360,7 @@ namespace casioemu {
             OpcodeSource *handler = opcode_dispatch[impl_opcode];
 
             if (!handler)
-                continue;
+                logger::Info("unrecognized instruction %04X at %06zX\n", impl_opcode, (((size_t)reg_csr.raw) << 16) | (reg_pc.raw - 2));
 
             impl_long_imm = 0;
             if (handler->hint & H_TI)

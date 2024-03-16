@@ -21,7 +21,6 @@ void gui_loop() {
     if (!m_emu->Running())
         return;
 
-    // cv.LookUp(1, 0x1235);
     ImGuiIO &io = ImGui::GetIO();
 
     ImGui_ImplSDLRenderer2_NewFrame();
