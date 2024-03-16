@@ -9,14 +9,6 @@ Download MSYS2. Run build.sh in MSYS2 MINGW64 environment.
 
 Only supports x64 architecture for now.
 
-## Usage
-
-Run the generated binary `casioemu32.exe` or `casioemu64.exe`
-
-To interact with the calculator keyboard, use the mouse (left click to press, right click to stick) or the keyboard (see `models/*/model.lua` for keyboard configuration).
-
-The dlls needed by the program (SDL2.dll, SDL2_image.dll) are in the `dlls` directory.
-
 ## Command-line arguments
 
 Each argument should have one of these two formats:
