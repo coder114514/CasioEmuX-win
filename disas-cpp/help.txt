@@ -6,8 +6,6 @@ Disassembler instruction_set_file_name.txt output_file_name.cpp
 
 *
 
-??? disassembler
-
 Usage:
 
 a.exe file_to_disassemble start_position length output_file_name.txt
