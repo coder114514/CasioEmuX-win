@@ -8,5 +8,4 @@ g++ -Wall -pedantic -std=c++14 -O2 \
 -L"./libs/SDL2_image-2.6.3/x86_64-w64-mingw32/lib" \
 -L"./libs/SDL2-2.26.4/x86_64-w64-mingw32/lib" \
 -L"./libs/readline-8" \
--lmingw32 -lSDL2main -lSDL2 -lSDL2_image -llua53 -lreadline -lhistory
-
+-static-libgcc -static-libstdc++ -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -llua53 -lreadline -lhistory -ltermcap
