@@ -1,4 +1,4 @@
-# folder names 'obj' are hardcoded
+# folder name 'obj' is hardcoded
 
 CXX ?= g++
 RM  ?= rm -f
