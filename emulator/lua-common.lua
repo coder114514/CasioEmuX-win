@@ -1,3 +1,52 @@
+function help()
+    print([[
+The supported functions are:
+printf()                  Print with format.
+ins()                     Log all register values to the screen.
+break_at(addr,fn)         Set breakpoint. If input not specified, break at current address. Second argument (optional) is a function that is executed whenever this breakpoint hits.
+unbreak_at(addr)          Delete breakpoint. If input not specified, delete breakpoint at current address. Have no effect if there is no breakpoint at specified position.
+cont()                    Continue program execution.
+pst()/pst(rad)            Print 48 or rad bytes of the stack before and after SP.
+emu:set_paused(-)         Pause/unpause emulator.
+emu:tick()                Execute one command.
+emu:shutdown()            Shutdown the emulator.
+cpu.xxx                   Get register value.
+cpu.bt                    Current stack trace.
+code[-]                   Access code. (By bytes)
+data[-]                   Access data. (By bytes)
+data:watch(addr,fn)       Set write watchpoint.
+data:rwatch(addr,fn)      Set read watchpoint.
+help()                    Print this help message.
+addposttick(fn)           Add a function as post-tick handler. (wrapper over emu:post_tick)
+rmposttick(fn)            Remove a post-tick handler. If called without argument, delete the most-recently added handler.
+er(x)                     Value of register ERx.
+
+GDB-style functions:
+(the long functions are intended to be used in code, the short functions are intended to be used interactively so they prints debug info/etc.)
+p(...)                    Shorthand for `print`.
+pn(addr)                  Print calculator number at address
+ps/gets(addr)             Print/get calculator string (0-terminated) at address
+pi/geti(addr)             Print/get 2-byte unsigned integer at address
+h()                       help()
+n()/nexti()               Go to next instruction.
+c()                       cont
+s()                       emu:tick()
+tr(filename)              Start tracing (record all executed instructions)
+trs()                     Stop tracing.
+q()                       emu:shutdown()
+b(addr,fn)                break/pause (breakpoint set with b should not be deleted with unbreak_at)
+ib()                      info breakpoints/watchpoints
+del(num)                  Delete breakpoint or watchpoint.
+bt()                      print(cpu.bt)
+rwa(offset,fn)            Set read watchpoint at location (watchpoints set with rwa(-,-) should be deleted with del(-))
+wa(offset,fn)             Set watchpoint at location (watchpoints set with wa(-,-) should be deleted with del(-))
+u0/until0()               Run until address is hit and sp is <= original sp. Not as fully-functional as gdb's `until` command, so `u0`.
+ppc()                     Print current PC address.
+calll(addr,before,after)  Call log.
+nrop()                    Next "ROP instruction".
+]])
+end
+
 local hwid = emu:model().hardware_id
 local stack_end = hwid == 3 and 0x8e00 or 0xf000
 local screen_nrow = hwid == 3 and 32 or 64
@@ -38,7 +87,6 @@ function rmposttick(fn)
         end
         print('Posttick handler not found')
     end
-
     if not next(posttickfns) then
         emu:post_tick(nil)
     end
@@ -60,12 +108,10 @@ function break_at(addr, commands)
     else
         commands = function() end
     end
-
     if not next(break_targets) then
         -- if break_targets is initially empty and later non-empty
         addposttick(break_posttick)
     end
-
     break_targets[addr] = commands
 end
 
@@ -74,7 +120,6 @@ function unbreak_at(addr)
         addr = get_real_pc()
     end
     break_targets[addr] = nil
-
     if not next(break_targets) then
         rmposttick(break_posttick)
     end
@@ -102,76 +147,6 @@ function ins()
     printf("%02X %02X %02X %02X | S %04X | %02X %01X:%04X",    cpu.r4,  cpu.r5,  cpu.r6,  cpu.r7,  cpu.sp,          cpu.epsw1, cpu.ecsr1, cpu.elr1)
     printf("%02X %02X %02X %02X | A %04X | %02X %01X:%04X",    cpu.r8,  cpu.r9,  cpu.r10, cpu.r11, cpu.ea,          cpu.epsw2, cpu.ecsr2, cpu.elr2)
     printf("%02X %02X %02X %02X | ELVL %01X | %02X %01X:%04X", cpu.r12, cpu.r13, cpu.r14, cpu.r15, cpu.psw & 3,     cpu.epsw3, cpu.ecsr3, cpu.elr3)
-end
-
-function help()
-    print([[
-The supported functions are:
-
-printf()            Print with format.
-
-ins()               Log all register values to the screen.
-
-break_at(off,fn)    Set breakpoint.
-                    If input not specified, break at current address.
-                    Second argument (optional) is a function that is executed whenever
-                    this breakpoint hits.
-
-unbreak_at(off)     Delete breakpoint.
-                    If input not specified, delete breakpoint at current address.
-                    Have no effect if there is no breakpoint at specified position.
-
-cont()              Continue program execution.
-
-pst()/pst(rad)      Print 48 or rad bytes of the stack before and after SP.
-
-emu:set_paused(-)   Set emulator state.
-emu:tick()          Execute one command.
-emu:shutdown()      Shutdown the emulator.
-
-cpu.xxx             Get register value.
-cpu.bt              Current stack trace.
-
-code[-]             Access code.
-data[-]             Access data. (By bytes)
-data:watch(off,fn)  Set write watchpoint.
-data:rwatch(off,fn) Set read watchpoint.
-help()              Print this help message.
-
-addposttick(fn)     Add a function as post-tick handler. (wrapper over emu:post_tick)
-rmposttick(fn)      Remove a post-tick handler. If called without argument,
-                    delete the most-recently added handler.
-
-er(x)               Value of register ERx.
-
-GDB-style functions:
-(the long functions are intended to be used in code, the short functions are intended
-to be used interactively so they prints debug info/etc.)
-
-p(...)              Shorthand for `print`.
-pn(off)             Print calculator number at address
-ps/gets(off)        Print/get calculator string (0-terminated) at address
-pi/geti(off)        Print/get 2-byte unsigned integer at address
-h()                 help()
-n()/nexti()         Go to next instruction.
-c()                 cont
-s()                 emu:tick()
-tr(filename)        Start tracing (record all executed instructions)
-trs()               Stop tracing.
-q()                 emu:shutdown()
-b(off,fn)           break/pause (breakpoint set with b should not be deleted with unbreak_at)
-del(num)            Delete breakpoint or watchpoint
-bt()                print(cpu.bt)
-rwa(offset,fn)      Set read watchpoint at location
-                       (watchpoints set with rwa should not be deleted with data:rwatch)
-wa(offset,fn)       Set watchpoint at location
-                       (watchpoints set with wa should not be deleted with data:watch)
-u0/until0()         Run until address is hit and sp is <= original sp.
-                       Not as fully-functional as gdb's `until` command, so `u0`.
-ppc()               Print current PC address.
-calll(off,bef,aft)  Call log.
-nrop()              Next "ROP instruction".
-]])
 end
 
 local function get_real_lr()
@@ -408,8 +383,7 @@ h = help
 function u0(addr) until0(addr) ppc() end
 
 function calll(addr, before, after)
-    -- Call before every time function addr is called and call after every time
-    -- function addr returns.
+    -- Call before every time function addr is called and call after every time function addr returns.
     before = to_function(before)
     after = to_function(after)
     b(addr, function()
@@ -552,7 +526,6 @@ end
 function prs() -- Print calculator number registers (specific to ES+)
     local x = {0x8000, 0x8010, 0x8020, 0x8030, 0x803C, 0x8046, 0x8050}
     for i,v in ipairs(x) do x[i]=getrn_str(v) end
-
     printf(' R0: %20s | R1: %20s | R2: %20s',x[1],x[2],x[3])
     printf(' R3: %20s | R4: %20s | R5: %20s',x[4],x[5],x[6])
     printf(' R6: %20s',x[7])
@@ -576,7 +549,6 @@ end
 
 function pst(radius)
     radius = radius or 48
-
     sp = cpu.sp
     w = io.write
     linecnt = 0
