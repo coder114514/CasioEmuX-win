@@ -18,6 +18,14 @@
 
 casioemu::Emulator *m_emu = nullptr;
 
+size_t get_real_pc(const CodeElem& e) {
+    return get_real_pc(e.segment, e.offset);
+}
+
+size_t get_real_pc(uint8_t seg, uint16_t off) {
+    return (seg << 16) | off;
+}
+
 CodeViewer::CodeViewer(std::string path) {
     src_path = path;
     std::ifstream f(src_path, std::ios::in);
@@ -51,10 +59,7 @@ CodeViewer::CodeViewer(std::string path) {
 }
 
 bool operator<(const CodeElem &a, const CodeElem &b) {
-    if (a.segment != b.segment)
-        return a.segment < b.segment;
-    else
-        return a.offset < b.offset;
+    return get_real_pc(a) < get_real_pc(b);
 }
 
 CodeViewer::~CodeViewer() {
@@ -81,7 +86,7 @@ bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool is_bp) {
         int idx = 0;
         LookUp(seg, offset, &idx);
         cur_row = idx;
-        bp = idx;
+        triggered_bp_line = idx;
         need_roll = true;
         return true;
     }
@@ -90,7 +95,7 @@ bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool is_bp) {
             CodeElem e = codes[it->first];
             if (e.segment == seg && e.offset == offset) {
                 cur_row = it->first;
-                bp = it->first;
+                triggered_bp_line = it->first;
                 need_roll = true;
                 return true;
             }
@@ -106,7 +111,7 @@ void CodeViewer::DrawContent() {
         for (int line_i = c.DisplayStart; line_i < c.DisplayEnd; line_i++) {
             CodeElem e = codes[line_i];
             auto it = break_points.find(line_i);
-            if (line_i == bp) {
+            if (line_i == triggered_bp_line) {
                 // the break point is triggered!
                 ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "[ > ]");
             } else if (it == break_points.end() || !break_points[line_i]) {
@@ -121,36 +126,14 @@ void CodeViewer::DrawContent() {
                 }
             }
             ImGui::SameLine();
-            ImGui::TextColored(ImVec4(1.0, 1.0, 0.0, 1.0), "%d:%04x", e.segment, e.offset);
+            ImGui::TextColored(ImVec4(1.0, 1.0, 0.0, 1.0), "%05zX", get_real_pc(e));
             ImGui::SameLine();
-            if (selected_addr != (int64_t)e.segment * 0x10000 + e.offset) { // not selected
-                ImGui::Text("%s", e.srcbuf);
-                if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(0)) {
-                    cur_row = line_i;
-                    selected_addr = codes[cur_row].segment * 0x10000 + codes[cur_row].offset;
-                }
-            } else { // selected
-                ImGui::InputText("##data", e.srcbuf, strlen(e.srcbuf), ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_AlwaysOverwrite);
-                if (ImGui::IsWindowFocused()) {
-                    if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow))) {
-                        cur_row++;
-                        if (cur_row >= max_row)
-                            cur_row = max_row;
-                        need_roll = true;
-                    } else if (ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow))) {
-                        cur_row--;
-                        if (cur_row < 0)
-                            cur_row = 0;
-                        need_roll = true;
-                    }
-                }
-            }
+            ImGui::Text("%s", e.srcbuf);
         }
     }
     if (need_roll) {
         float v = (float)cur_row / max_row * ImGui::GetScrollMaxY();
         ImGui::SetScrollY(v);
-        selected_addr = codes[cur_row].segment * 0x10000 + codes[cur_row].offset;
         need_roll = false;
     }
 }
@@ -171,13 +154,13 @@ void CodeViewer::DrawWindow() {
     if (!is_loaded) {
         ImGui::SetNextWindowSize(ImVec2(w * 50, h * 10), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowContentSize(ImVec2(w * 50, h * 10));
-        ImGui::Begin("Disassemble Window");
+        ImGui::Begin("Disassembly");
         ImGui::SetCursorPos(ImVec2(w * 2, h * 5));
-        ImGui::Text("Please wait loading...");
+        ImGui::Text("Loading...");
         ImGui::End();
         return;
     }
-    ImGui::Begin("Disassemble Window", 0);
+    ImGui::Begin("Disassembly", 0);
     ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetWindowHeight() / 2));
     DrawContent();
     ImGui::EndChild();
@@ -187,29 +170,23 @@ void CodeViewer::DrawWindow() {
     ImGui::SetNextItemWidth(ImGui::CalcTextSize("000000").x);
     ImGui::InputText("##input", adrbuf, 8);
     if (adrbuf[0] != '\0' && ImGui::IsItemFocused()) {
-        try {
-            uint32_t addr = std::stoi(adrbuf, 0, 16);
+        size_t addr;
+        if (sscanf(adrbuf, "%zX", &addr) == 1)
             JumpTo(addr >> 16, addr & 0x0ffff);
-        } catch (std::invalid_argument const &ex) {
-            // do nothing
-        } catch (std::out_of_range const &ex) {
-            // do nothing
-        }
     }
     ImGui::SameLine();
     ImGui::Checkbox("STEP", &step_debug);
     ImGui::SameLine();
     ImGui::Checkbox("TRACE", &trace_debug);
-    if (bp != -1) {
+    if (triggered_bp_line != -1) {
         ImGui::SameLine();
         if (ImGui::Button("Continue")) {
             if (!step_debug && !trace_debug)
-                break_points[bp] = 0;
+                break_points[triggered_bp_line] = 0;
             m_emu->SetPaused(false);
-            bp = -1;
+            triggered_bp_line = -1;
         }
     }
-
     DrawMonitor();
     ImGui::End();
     debug_flags = DEBUG_BREAKPOINT | (step_debug ? DEBUG_STEP : 0) | (trace_debug ? DEBUG_RET_TRACE : 0);

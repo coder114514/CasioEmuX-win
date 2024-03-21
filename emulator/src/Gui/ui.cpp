@@ -18,7 +18,7 @@ static SDL_Window *window;
 static SDL_Renderer *renderer;
 static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-void gui_loop() {
+void debugger_gui_loop() {
     if (!m_emu->Running())
         return;
 
@@ -32,7 +32,7 @@ void gui_loop() {
     if (n_ram_buffer != nullptr) {
         size_t base = m_emu->hardware_id == casioemu::HW_ES_PLUS ? 0x8000 : 0xD000;
         size_t size = m_emu->hardware_id == casioemu::HW_ES_PLUS ? 0x0E00 : 0x2000;
-        mem_edit.DrawWindow("RAM Editor", n_ram_buffer, base, size);
+        mem_edit.DrawWindow("RAM Editor", n_ram_buffer, size, base);
     }
     code_viewer->DrawWindow();
 
@@ -45,8 +45,8 @@ void gui_loop() {
     SDL_RenderPresent(renderer);
 }
 
-int test_gui() {
-    window = SDL_CreateWindow("CasioEmuX", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 900, 600, window_flags);
+int init_debugger_window() {
+    window = SDL_CreateWindow("CasioEmuX Debugger", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 900, 600, window_flags);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     if (renderer == nullptr) {
         SDL_Log("Error creating SDL_Renderer!");

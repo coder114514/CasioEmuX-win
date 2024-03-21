@@ -322,12 +322,13 @@ struct MemoryEditor {
                         UserData user_data;
                         user_data.CursorPos = -1;
                         sprintf(user_data.CurrentBufOverwrite, format_byte, ReadFn ? ReadFn(mem_data, addr) : mem_data[addr]);
-                        ImGuiInputTextFlags flags = ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoHorizontalScroll | ImGuiInputTextFlags_CallbackAlways;
-#if IMGUI_VERSION_NUM >= 18104
-                        flags |= ImGuiInputTextFlags_AlwaysOverwrite;
-#else
-                        flags |= ImGuiInputTextFlags_AlwaysInsertMode;
-#endif
+                        ImGuiInputTextFlags flags =
+                            ImGuiInputTextFlags_CharsHexadecimal |
+                            ImGuiInputTextFlags_EnterReturnsTrue |
+                            ImGuiInputTextFlags_AutoSelectAll |
+                            ImGuiInputTextFlags_NoHorizontalScroll |
+                            ImGuiInputTextFlags_CallbackAlways |
+                            ImGuiInputTextFlags_AlwaysOverwrite;
                         ImGui::SetNextItemWidth(s.GlyphWidth * 2);
                         if (ImGui::InputText("##data", DataInputBuf, IM_ARRAYSIZE(DataInputBuf), flags, UserData::Callback, &user_data))
                             data_write = data_next = true;
@@ -452,7 +453,7 @@ struct MemoryEditor {
         ImGui::SetNextItemWidth((s.AddrDigitsCount + 1) * s.GlyphWidth + style.FramePadding.x * 2.0f);
         if (ImGui::InputText("##addr", AddrInputBuf, IM_ARRAYSIZE(AddrInputBuf), ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue)) {
             size_t goto_addr;
-            if (sscanf(AddrInputBuf, "%" _PRISizeT "X", &goto_addr) == 1) {
+            if (sscanf(AddrInputBuf, "%zX", &goto_addr) == 1) {
                 GotoAddr = goto_addr - base_display_addr;
                 HighlightMin = HighlightMax = (size_t)-1;
             }

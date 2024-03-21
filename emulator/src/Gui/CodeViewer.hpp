@@ -14,6 +14,9 @@ struct CodeElem {
     CodeElem(uint8_t seg, uint16_t off) : segment(seg), offset(off) {}
 };
 
+size_t get_real_pc(const CodeElem&);
+size_t get_real_pc(uint8_t, uint16_t);
+
 enum EmuDebugFlag {
     DEBUG_BREAKPOINT = 1,
     DEBUG_STEP = 2,
@@ -33,8 +36,7 @@ private:
 
     bool is_loaded = false;
     bool need_roll = false;
-    int64_t selected_addr = -1;
-    int64_t bp = -1;
+    int64_t triggered_bp_line = -1;
 
 public:
     uint8_t debug_flags = DEBUG_BREAKPOINT;

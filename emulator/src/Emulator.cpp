@@ -43,14 +43,12 @@ namespace casioemu {
         height = interface_background.dest.h;
         try {
             std::size_t pos;
-
             auto width_iter = argv_map.find("width");
             if (width_iter != argv_map.end()) {
                 width = std::stoi(width_iter->second, &pos, 0);
                 if (pos != width_iter->second.size())
                     PANIC("width parameter has extraneous trailing characters\n");
             }
-
             auto height_iter = argv_map.find("height");
             if (height_iter != argv_map.end()) {
                 height = std::stoi(height_iter->second, &pos, 0);

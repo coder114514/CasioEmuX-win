@@ -41,8 +41,8 @@ int main(int argc, char *argv[]) {
             key = std::string(argv[ix], eq_pos);
             value = eq_pos + 1;
         } else {
-            key = "model";
-            value = argv[ix];
+            key = argv[ix];
+            value = "";
         }
 
         if (argv_map.find(key) == argv_map.end())
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
         // Used to signal to the console input thread when to stop.
         static std::atomic<bool> running(true);
 
-        test_gui();
+        init_debugger_window();
         std::thread console_input_thread([&] {
             struct terminate_thread {};
             rl_event_hook = []() {
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
         });
         std::thread t1([&]() {
             while (1) {
-                gui_loop();
+                debugger_gui_loop();
             }
         });
         t1.detach();

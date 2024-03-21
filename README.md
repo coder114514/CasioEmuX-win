@@ -57,10 +57,9 @@ If something goes wrong, run `mingw32-make clean` to clean up and start again.
 
 ## Command-line arguments
 
-Each argument should have one of these two formats:
+Each argument should have the format:
 
 * `key=value` where `key` does not contain any equal signs.
-* `path`: equivalent to `model=path`.
 
 Supported values of `key` are: (if `value` is not mentioned then it does not matter)
 
