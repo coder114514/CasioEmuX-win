@@ -363,31 +363,11 @@ namespace casioemu {
 
     void Emulator::ExecuteCommand(std::string command) {
         std::lock_guard<decltype(access_mx)> access_lock(access_mx);
-
         lua_State *thread = lua_newthread(lua_state);
-
-        // load command to thread's stack
-        const char *ugly_string_data_ptr = command.c_str();
-        if (lua_load(
-                thread, [](lua_State *, void *data, size_t *size) {
-                    char **ugly_string_data_ptr_ptr = (char **)data;
-                    if (!*ugly_string_data_ptr_ptr)
-                        return (const char *)nullptr;
-                    const char *result = *ugly_string_data_ptr_ptr;
-                    *size = strlen(result);
-                    *ugly_string_data_ptr_ptr = nullptr;
-                    return result;
-                },
-                &ugly_string_data_ptr, "stdin", "t") != LUA_OK) {
+        if (luaL_dostring(thread, command.c_str())) {
             logger::Info("%s\n", lua_tostring(thread, -1));
-        } else {
-            int status = lua_resume(thread, nullptr, 0);
-            // * TODO Is it necessary to clear the stack?
-            if (status != LUA_OK && status != LUA_YIELD)
-                logger::Info("%s\n", lua_tostring(thread, -1));
         }
-
-        lua_pop(lua_state, 1); // thread
+        lua_pop(lua_state, 1); // pop thread
     }
 
     void Emulator::SetPaused(bool _paused) {

@@ -83,8 +83,6 @@ int main(int argc, char *argv[]) {
 
         // Used to signal to the console input thread when to stop.
         static std::atomic<bool> running(true);
-        static std::atomic<int> inp_cnt(0);
-        static char pr[500];
 
         test_gui();
         std::thread console_input_thread([&] {
@@ -105,9 +103,8 @@ int main(int argc, char *argv[]) {
             };
             while (1) {
                 char *console_input_c_str;
-                sprintf(pr, "In [%d]: ", ++inp_cnt);
                 try {
-                    console_input_c_str = readline(pr);
+                    console_input_c_str = readline("> ");
                 } catch (terminate_thread) {
                     rl_cleanup_after_signal();
                     return;

@@ -37,25 +37,27 @@ namespace casioemu {
         region.Setup(
             emulator.hardware_id == HW_ES_PLUS ? 0x8000 : 0xD000,
             emulator.hardware_id == HW_ES_PLUS ? 0x0E00 : 0x2000,
-            "BatteryBackedRAM", ram_buffer,
+            "BatteryBackedRAM",
+            ram_buffer,
             [](MMURegion *region, size_t offset) { return ((uint8_t *)region->userdata)[offset - region->base]; },
             [](MMURegion *region, size_t offset, uint8_t data) { ((uint8_t *)region->userdata)[offset - region->base] = data; },
             emulator);
         if (!real_hardware)
             region_2.Setup(
-                emulator.hardware_id == HW_ES_PLUS ? 0x9800 : 0x49800, 0x0100,
-                "BatteryBackedRAM/2", ram_buffer + ram_size - 0x100,
+                emulator.hardware_id == HW_ES_PLUS ? 0x9800 : 0x49800,
+                0x0100,
+                "BatteryBackedRAM/2",
+                ram_buffer + ram_size - 0x100,
                 [](MMURegion *region, size_t offset) { return ((uint8_t *)region->userdata)[offset - region->base]; },
                 [](MMURegion *region, size_t offset, uint8_t data) { ((uint8_t *)region->userdata)[offset - region->base] = data; },
                 emulator);
         n_ram_buffer = (char *)ram_buffer;
-        logger::Info("inited hex editor!\n");
+        logger::Info("inited RAM!\n");
     }
 
     void BatteryBackedRAM::Uninitialise() {
         if (ram_file_requested && emulator.argv_map.find("preserve_ram") == emulator.argv_map.end())
             SaveRAMImage();
-
         delete[] ram_buffer;
     }
 

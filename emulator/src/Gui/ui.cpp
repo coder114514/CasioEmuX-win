@@ -1,3 +1,4 @@
+#include "../Data/HardwareId.hpp"
 #include "CodeViewer.hpp"
 #include "SDL_timer.h"
 #include "imgui/imgui.h"
@@ -28,8 +29,11 @@ void gui_loop() {
     ImGui::NewFrame();
 
     static MemoryEditor mem_edit;
-    if (n_ram_buffer != nullptr)
-        mem_edit.DrawWindow("Memory Editor", n_ram_buffer, 0x2000, 0xd000);
+    if (n_ram_buffer != nullptr) {
+        size_t base = m_emu->hardware_id == casioemu::HW_ES_PLUS ? 0x8000 : 0xD000;
+        size_t size = m_emu->hardware_id == casioemu::HW_ES_PLUS ? 0x0E00 : 0x2000;
+        mem_edit.DrawWindow("RAM Editor", n_ram_buffer, base, size);
+    }
     code_viewer->DrawWindow();
 
     // Rendering
