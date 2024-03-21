@@ -80,6 +80,7 @@ namespace casioemu {
         CPU(Emulator &emulator);
         ~CPU();
         void SetupInternals();
+        size_t GetCurrentRealPC();
 
         /**
          * See 1.2.2.1 in the nX-U8 manual.

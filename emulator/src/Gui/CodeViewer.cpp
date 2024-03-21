@@ -128,21 +128,16 @@ void CodeViewer::DrawContent() {
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(1.0, 1.0, 0.0, 1.0), "%05zX", get_real_pc(e));
             ImGui::SameLine();
-            ImGui::Text("%s", e.srcbuf);
+            if (m_emu->chipset.cpu.GetCurrentRealPC() == get_real_pc(e))
+                ImGui::TextColored(ImVec4(0.0, 1.0, 0.0, 1.0), "%s", e.srcbuf);
+            else
+                ImGui::Text("%s", e.srcbuf);
         }
     }
     if (need_roll) {
         float v = (float)cur_row / max_row * ImGui::GetScrollMaxY();
         ImGui::SetScrollY(v);
         need_roll = false;
-    }
-}
-
-void CodeViewer::DrawMonitor() {
-    if (m_emu != nullptr) {
-        casioemu::Chipset &chipset = m_emu->chipset;
-        std::string s = chipset.cpu.GetBacktrace();
-        ImGui::InputTextMultiline("##as", (char *)s.c_str(), s.size(), ImVec2(ImGui::GetWindowWidth(), 0), ImGuiInputTextFlags_ReadOnly);
     }
 }
 
@@ -161,10 +156,9 @@ void CodeViewer::DrawWindow() {
         return;
     }
     ImGui::Begin("Disassembly", 0);
-    ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetWindowHeight() / 2));
+    ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetTextLineHeight() * 1.8f));
     DrawContent();
     ImGui::EndChild();
-    ImGui::Separator();
     ImGui::Text("Go to Addr:");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::CalcTextSize("000000").x);
@@ -187,7 +181,6 @@ void CodeViewer::DrawWindow() {
             triggered_bp_line = -1;
         }
     }
-    DrawMonitor();
     ImGui::End();
     debug_flags = DEBUG_BREAKPOINT | (step_debug ? DEBUG_STEP : 0) | (trace_debug ? DEBUG_RET_TRACE : 0);
 }

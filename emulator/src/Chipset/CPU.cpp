@@ -10,6 +10,10 @@
 #include <sstream>
 
 namespace casioemu {
+    size_t CPU::GetCurrentRealPC() {
+        return (reg_csr << 16) | reg_pc;
+    }
+
     CPU::OpcodeSource CPU::opcode_sources[] = {
         //       function                hints            opcode    operand {size, mask, shift} x2
         // * Arithmetic Instructions

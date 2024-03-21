@@ -1,5 +1,6 @@
 #include "../Data/HardwareId.hpp"
 #include "CodeViewer.hpp"
+#include "Watcher.hpp"
 #include "SDL_timer.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl2.h"
@@ -13,6 +14,8 @@
 
 char *n_ram_buffer = nullptr;
 CodeViewer *code_viewer = nullptr;
+Watcher *watcher = nullptr;
+
 static SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 static SDL_Window *window;
 static SDL_Renderer *renderer;
@@ -35,6 +38,7 @@ void debugger_gui_loop() {
         mem_edit.DrawWindow("RAM Editor", n_ram_buffer, size, base);
     }
     code_viewer->DrawWindow();
+    watcher->DrawWindow();
 
     // Rendering
     ImGui::Render();
@@ -68,6 +72,7 @@ int init_debugger_window() {
     ImGui_ImplSDLRenderer2_Init(renderer);
 
     code_viewer = new CodeViewer(m_emu->GetModelFilePath("_disas.txt"));
+    watcher = new Watcher(m_emu);
 
     return 0;
 }

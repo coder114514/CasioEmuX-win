@@ -73,7 +73,6 @@ struct MemoryEditor {
     };
 
     // Settings
-    bool Open;                                         // = true   // set to false when DrawWindow() was closed. ignore if not using DrawWindow().
     bool ReadOnly;                                     // = false  // disable any editing.
     int Cols;                                          // = 16     // number of columns to display.
     bool OptShowOptions;                               // = true   // display options button/context menu. when disabled, options will be locked unless you provide your own UI for them.
@@ -104,7 +103,6 @@ struct MemoryEditor {
 
     MemoryEditor() {
         // Settings
-        Open = true;
         ReadOnly = false;
         Cols = 16;
         OptShowOptions = true;
@@ -183,8 +181,7 @@ struct MemoryEditor {
         ImGui::SetNextWindowSize(ImVec2(s.WindowWidth, s.WindowWidth * 0.60f), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, 0.0f), ImVec2(s.WindowWidth, FLT_MAX));
 
-        Open = true;
-        if (ImGui::Begin(title, &Open, ImGuiWindowFlags_NoScrollbar)) {
+        if (ImGui::Begin(title, nullptr, ImGuiWindowFlags_NoScrollbar)) {
             if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows) && ImGui::IsMouseReleased(ImGuiMouseButton_Right))
                 ImGui::OpenPopup("context");
             DrawContents(mem_data, mem_size, base_display_addr);
