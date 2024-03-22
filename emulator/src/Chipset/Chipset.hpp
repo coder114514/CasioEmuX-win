@@ -26,13 +26,6 @@ namespace casioemu {
             INT_COUNT = 128
         };
 
-        enum RunMode {
-            RM_STOP,
-            RM_HALT,
-            RM_RUN
-        };
-        RunMode run_mode;
-
         std::forward_list<Peripheral *> peripherals;
 
         /**
@@ -54,6 +47,13 @@ namespace casioemu {
         static const uint16_t interrupt_bitfield_mask = (1 << managed_interrupt_amount) - 1;
 
     public:
+        enum RunMode {
+            RM_STOP,
+            RM_HALT,
+            RM_RUN
+        };
+        RunMode run_mode;
+
         Chipset(Emulator &emulator);
         void Setup(); // must be called after emulator.hardware_id is initialized
         ~Chipset();

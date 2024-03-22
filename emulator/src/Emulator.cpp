@@ -200,6 +200,28 @@ namespace casioemu {
         });
         lua_setfield(lua_state, -2, "set_paused");
 
+        lua_pushcfunction(lua_state, [](lua_State *lua_state) {
+            Emulator *emu = *(Emulator **)lua_topointer(lua_state, 1);
+            switch (lua_gettop(lua_state)) {
+            case 1: {
+                int run_mode = emu->chipset.run_mode;
+                lua_pushinteger(lua_state, run_mode);
+                return 1;
+            }
+            case 2: {
+                // RM_STOP, RM_HALT, RM_RUN
+                int run_mode = lua_tointeger(lua_state, 2);
+                if (Chipset::RM_STOP <= run_mode && run_mode <= Chipset::RM_RUN) {
+                    emu->chipset.run_mode = (Chipset::RunMode)run_mode;
+                }
+                return 0;
+            }
+            default:
+                return 0;
+            }
+        });
+        lua_setfield(lua_state, -2, "run_mode");
+
         lua_model_ref = LUA_REFNIL;
         lua_pushcfunction(lua_state, [](lua_State *lua_state) {
             Emulator *emu = *(Emulator **)lua_topointer(lua_state, 1);

@@ -57,6 +57,33 @@ local break_targets = {}
 
 local posttickfns = {}
 
+function run_mode(rm)
+    if rm == nil then
+        if emu:run_mode() == 0 then
+            print("RM_STOP(0)")
+        end
+        if emu:run_mode() == 1 then
+            print("RM_HALT(1)")
+        end
+        if emu:run_mode() == 2 then
+            print("RM_RUN(2)")
+        end
+        return
+    end
+    if rm == 'RM_STOP' then
+        rm = 0
+    end
+    if rm == 'RM_HALT' then
+        rm = 1
+    end
+    if rm == 'RM_RUN' then
+        rm = 2
+    end
+    if type(rm) == 'number' then
+        emu:run_mode(rm)
+    end
+end
+
 function addposttick(fn)
     if type(fn) ~= 'function' then
         print('Argument is not a function')
