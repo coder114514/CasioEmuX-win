@@ -65,6 +65,8 @@ namespace casioemu {
         size_t impl_hint;
         uint16_t impl_csr_mask;
 
+        bool real_hardware;
+
         void SetupOpcodeDispatch();
         void SetupRegisterProxies();
 

@@ -244,6 +244,7 @@ namespace casioemu {
         SetupOpcodeDispatch();
         SetupRegisterProxies();
         impl_csr_mask = emulator.GetModelInfo("csr_mask");
+        real_hardware = emulator.GetModelInfo("real_hardware");
     }
 
     void CPU::SetupOpcodeDispatch() {
