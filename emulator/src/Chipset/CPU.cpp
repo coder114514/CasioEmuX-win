@@ -433,13 +433,11 @@ namespace casioemu {
     }
 
     void CPU::Raise(size_t exception_level, size_t index) {
-        if (exception_level == 1)
-            reg_psw.raw &= ~PSW_MIE;
-        reg_psw.raw = (reg_psw.raw & ~PSW_ELEVEL) | exception_level;
-
         reg_elr[exception_level].raw = reg_pc.raw;
         reg_ecsr[exception_level].raw = reg_csr.raw;
-
+        reg_epsw[exception_level].raw = reg_psw.raw;
+        if (exception_level == 1) reg_psw.raw &= ~PSW_MIE;
+        reg_psw.raw = (reg_psw.raw & ~PSW_ELEVEL) | exception_level;
         reg_csr.raw = 0;
         reg_pc.raw = emulator.chipset.mmu.ReadCode(index * 2);
     }
