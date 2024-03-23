@@ -18,7 +18,6 @@ namespace casioemu {
         struct RegisterStub {
             size_t type_size;
             std::string name;
-
             uint16_t raw;
         };
 
@@ -28,32 +27,25 @@ namespace casioemu {
                 type_size = sizeof(value_type);
                 name = "?";
             }
-
             operator value_type() {
                 return raw;
             }
-
             Register<value_type> &operator=(value_type value) {
                 raw = value;
                 return *this;
             }
-
             Register<value_type> &operator&=(value_type value) {
                 return *this = raw & value;
             }
-
             Register<value_type> &operator|=(value_type value) {
                 return *this = raw | value;
             }
-
             Register<value_type> &operator^=(value_type value) {
                 return *this = raw ^ value;
             }
-
             Register<value_type> &operator+=(value_type value) {
                 return *this = raw + value;
             }
-
             Register<value_type> &operator-=(value_type value) {
                 return *this = raw - value;
             }
@@ -120,6 +112,8 @@ namespace casioemu {
         size_t GetExceptionLevel();
         bool GetMasterInterruptEnable();
         std::string GetBacktrace() const;
+        uint8_t GetDSR() const;
+        void SetDSR(uint8_t);
 
     private:
         struct StackFrame {

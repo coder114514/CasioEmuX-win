@@ -6,6 +6,7 @@
 #include "Chipset.hpp"
 #include "MMU.hpp"
 
+#include <cstdint>
 #include <iomanip>
 #include <sstream>
 
@@ -467,5 +468,13 @@ namespace casioemu {
             output << '\n';
         }
         return output.str();
+    }
+
+    uint8_t CPU::GetDSR() const {
+        return impl_last_dsr;
+    }
+
+    void CPU::SetDSR(uint8_t dsr) {
+        impl_last_dsr = dsr;
     }
 } // namespace casioemu

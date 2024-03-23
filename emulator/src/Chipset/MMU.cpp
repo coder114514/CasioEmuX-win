@@ -8,15 +8,16 @@
 
 namespace casioemu {
     const uint8_t UNMAPPED_VALUE = 0x00;
+    const size_t NSEGS = 0x100;
 
     MMU::MMU(Emulator &_emulator) : emulator(_emulator) {
-        segment_dispatch = new MemoryByte *[0x10];
-        for (size_t ix = 0; ix != 0x10; ++ix)
+        segment_dispatch = new MemoryByte *[NSEGS];
+        for (size_t ix = 0; ix != NSEGS; ++ix)
             segment_dispatch[ix] = nullptr;
     }
 
     MMU::~MMU() {
-        for (size_t ix = 0; ix != 0x10; ++ix)
+        for (size_t ix = 0; ix != NSEGS; ++ix)
             if (segment_dispatch[ix])
                 delete[] segment_dispatch[ix];
         delete[] segment_dispatch;
