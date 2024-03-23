@@ -35,7 +35,7 @@ private:
     int cur_row = 0;
 
     bool is_loaded = false;
-    bool need_roll = false;
+    bool try_roll = false;
     int64_t triggered_bp_line = -1;
 
 public:

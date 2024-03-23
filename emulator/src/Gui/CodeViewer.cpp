@@ -67,12 +67,10 @@ CodeViewer::~CodeViewer() {
 
 CodeElem CodeViewer::LookUp(uint8_t seg, uint16_t offset, int *idx) {
     // binary search
-    CodeElem target;
-    target.offset = offset;
-    target.segment = seg;
-    auto it = std::lower_bound(codes.begin(), codes.end(), target);
-    if (it == codes.end())
-        it = codes.begin();
+    CodeElem target(seg, offset);
+    auto it = std::upper_bound(codes.begin(), codes.end(), target);
+    if (it != codes.begin())
+        --it;
     if (idx)
         *idx = it - codes.begin();
     return CodeElem(it->segment, it->offset);
@@ -86,8 +84,8 @@ bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool is_bp) {
         int idx = 0;
         LookUp(seg, offset, &idx);
         cur_row = idx;
-        triggered_bp_line = idx;
-        need_roll = true;
+        triggered_bp_line = -1;
+        try_roll = true;
         return true;
     }
     for (auto it = break_points.begin(); it != break_points.end(); it++) {
@@ -96,7 +94,7 @@ bool CodeViewer::TryTrigBP(uint8_t seg, uint16_t offset, bool is_bp) {
             if (e.segment == seg && e.offset == offset) {
                 cur_row = it->first;
                 triggered_bp_line = it->first;
-                need_roll = true;
+                try_roll = true;
                 return true;
             }
         }
@@ -133,11 +131,13 @@ void CodeViewer::DrawContent() {
             else
                 ImGui::Text("%s", e.srcbuf);
         }
-    }
-    if (need_roll) {
-        float v = (float)cur_row / max_row * ImGui::GetScrollMaxY();
-        ImGui::SetScrollY(v);
-        need_roll = false;
+        if (try_roll) {
+            try_roll = false;
+            if (!(c.DisplayStart + 1 <= cur_row && cur_row < c.DisplayEnd - 5)) {
+                float v = (float)cur_row / max_row * ImGui::GetScrollMaxY();
+                ImGui::SetScrollY(v);
+            }
+        }
     }
 }
 
@@ -162,8 +162,7 @@ void CodeViewer::DrawWindow() {
     ImGui::Text("Go to Addr:");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(ImGui::CalcTextSize("000000").x);
-    ImGui::InputText("##input", adrbuf, 8);
-    if (adrbuf[0] != '\0' && ImGui::IsItemFocused()) {
+    if (ImGui::InputText("##input", adrbuf, sizeof(adrbuf), ImGuiInputTextFlags_EnterReturnsTrue)) {
         size_t addr;
         if (sscanf(adrbuf, "%zX", &addr) == 1)
             JumpTo(addr >> 16, addr & 0x0ffff);
@@ -172,7 +171,7 @@ void CodeViewer::DrawWindow() {
     ImGui::Checkbox("STEP", &step_debug);
     ImGui::SameLine();
     ImGui::Checkbox("TRACE", &trace_debug);
-    if (triggered_bp_line != -1) {
+    if (m_emu->GetPaused()) {
         ImGui::SameLine();
         if (ImGui::Button("Continue")) {
             if (!step_debug && !trace_debug)
@@ -189,5 +188,5 @@ void CodeViewer::JumpTo(uint8_t seg, uint16_t offset) {
     int idx = 0;
     LookUp(seg, offset, &idx);
     cur_row = idx;
-    need_roll = true;
+    try_roll = true;
 }

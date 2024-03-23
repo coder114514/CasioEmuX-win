@@ -403,6 +403,10 @@ namespace casioemu {
                 for (size_t bx = 0; bx != impl_operands[0].register_size; ++bx)
                     reg_r[impl_operands[0].register_index + bx] = (uint8_t)(impl_operands[0].value >> (bx * 8));
 
+            // It's impossible to pause right after a DSR prefix instruction, which can result in something like this:
+            // [ o ] DSR<-...
+            // [ > ] ... <--- this line is not highlighted
+            // [ o ] ... <--- this line is highlighted instead
             if (code_viewer) {
                 if ((code_viewer->debug_flags & DEBUG_BREAKPOINT) && code_viewer->TryTrigBP(reg_csr, reg_pc)) {
                     emulator.SetPaused(true);
