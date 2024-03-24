@@ -99,6 +99,7 @@ namespace casioemu {
 
         cpu.Reset();
 
+        for (size_t ix = 0; ix < INT_COUNT; ix++) interrupts_active[ix] = false;
         interrupts_active[INT_RESET] = true;
         pending_interrupt_count = 1;
 
@@ -193,16 +194,13 @@ namespace casioemu {
         case INT_RESET:
             exception_level = 0;
             break;
-
         case INT_BREAK:
         case INT_NONMASKABLE:
             exception_level = 2;
             break;
-
         case INT_EMULATOR:
             exception_level = 3;
             break;
-
         default:
             exception_level = 1;
             break;
@@ -214,14 +212,14 @@ namespace casioemu {
                 if (cpu.GetMasterInterruptEnable())
                     cpu.Raise(exception_level, index);
             }
-        } else {
+        } else if (index) {
             cpu.Raise(exception_level, index);
         }
 
         run_mode = RM_RUN;
 
         // * TODO: introduce delay
-
+        if (!index) return;
         interrupts_active[index] = false;
         pending_interrupt_count--;
     }
